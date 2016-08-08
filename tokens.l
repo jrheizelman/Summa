@@ -46,6 +46,7 @@ extern "C" int yywrap() { return 1; }
 "char"					return TOKEN(CHAR);
 "int"					return TOKEN(INT);
 "double"				return TOKEN(DOUBLE);
+"void"					return TOKEN(VOID);
 "true"|"false"			SAVE_TOKEN; return BOOL_LIT;
 "\"[^\"]*\""			SAVE_TOKEN; return STRING_LIT;
 "\'[^']?\'"				SAVE_TOKEN; return CHAR_LIT;

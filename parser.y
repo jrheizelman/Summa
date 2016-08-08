@@ -26,7 +26,7 @@
  */
 %token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT
 %token SEMI COMMA IF WHILE FOR RETURN DOT BOOL INT STRING CHAR DOUBLE ASSIGN
-%token CONTINUE FUNC
+%token CONTINUE FUNC VOID
 
 %type <stmt> stmt
 %type <rval> rval
@@ -72,12 +72,16 @@ var_def :
 	;
 
 type :
+	/* Language-defined types */
 	INT { $$ = new Type("int"); }
 	| DOUBLE { $$ = new Type("double"); }
 	| CHAR { $$ = new Type("char"); }
 	| STRING { $$ = new Type("string"); }
 	| BOOL { $$ = new Type("bool"); }
+	| VOID { $$ = new Type("void"); }
+	/* User-defined types */
 	| ID { $$ = new Type(*$1); }
+	/* Array type declaration */
 	| type LBRACK RBRACK { $1->arr_dim++; }
 	;
 
