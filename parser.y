@@ -10,10 +10,12 @@
 %union {
     Rval *rval;
     Stmt *stmt;
+    Block *block;
     std::string *string;
     int token;
     Lval *lval;
     RvalList *actuals;
+
 }
 
 /* Define our terminal symbols (tokens). This should
@@ -27,6 +29,7 @@
 %type <stmt> stmt
 %type <rval> rval
 %type <lval> lval
+%type <block> block stmt_list
 %type <actuals> actuals_opt actuals_list
 
 /* Operator precedence for mathematical operators */
@@ -41,13 +44,28 @@
 %right NEG
 %left LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
 
-%start stmt
+%start block
 
 %%
+
+block :
+	LBRACE stmt_list RBRACE { $$ = $2; }
+	| LBRACE RBRACE { $$ = new Block(); }
+	;
+
+stmt_list :
+	stmt { $$ = new Block(); $$->stmt_list.push_back($1); }
+	| stmt_list stmt { $1->stmt_list.push_back($2); }
+	;
 
 stmt :
 	lval ASSIGN rval SEMI { $$ = new Assign(*$1, *$3); }
 	| RETURN rval SEMI { $$ = new Return(*$2); }
+	| rval SEMI { }
+	| IF LPAREN rval RPAREN block %prec NOELSE {
+		$$ = new If(*$3, *$5, *new Block()); }
+	| IF LPAREN rval RPAREN block ELSE block {
+		$$ = new If(*$3, *$5, *$7); }
 	;
 
 lval :

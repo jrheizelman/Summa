@@ -3,12 +3,20 @@
 
 class Rval;
 class Lval;
+class Stmt;
 
 typedef std::vector<Rval*> RvalList;
+typedef std::vector<Stmt*> StmtList;
 
 class Node {
 public:
     virtual ~Node() {}
+};
+
+class Block : public Node {
+public:
+    StmtList stmt_list;
+    Block() { }
 };
 
 class Stmt : public Node {
@@ -25,6 +33,15 @@ class Return : public Stmt {
 public:
     Rval& rval;
     Return(Rval& rval) : rval(rval) { }
+};
+
+class If : public Stmt {
+public:
+    Rval& condition;
+    Block& if_block;
+    Block& else_block;
+    If(Rval& condition, Block& if_block, Block& else_block) :
+        condition(condition), if_block(if_block), else_block(else_block) { }
 };
 
 class Rval : public Node {
