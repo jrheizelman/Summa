@@ -20,6 +20,7 @@
     Type *type;
     Program *program;
     Func_def *func_def;
+    Glob_var *glob_var;
 }
 
 /* Define our terminal symbols (tokens). This should
@@ -37,8 +38,9 @@
 %type <actuals> actuals_opt actuals_list
 %type <params> params_opt params_list
 %type <var_def> var_def
-%type <type> type
+%type <type> type type_def
 %type <func_def> func_def
+%type <glob_var> glob_var
 %type <program> program
 
 /* Operator precedence for mathematical operators */
@@ -60,7 +62,11 @@
 program :
 	func_def { $$ = new Program(); $$->functions.push_back($1);  }
 	| program func_def { $1->functions.push_back($2); }
+	| program glob_var { $1->global_vars.push_back($2); }
 	;
+
+glob_var :
+	ID ASSIGN rval SEMI { $$ = new Glob_var(*new Id(*$1), *$3); }
 
 func_def :
 	FUNC ID LPAREN params_opt RPAREN block {
@@ -78,7 +84,12 @@ params_list :
 	;
 
 var_def :
-	type ID { $$ = new Var_def(*$1, *new Id(*$2)); }
+	type_def ID { $$ = new Var_def(*$1, *new Id(*$2)); }
+	;
+
+type_def : /* Needed to allow for array declarations */
+	type { $$ = $1; }
+	| type LBRACK RBRACK { $1->arr_dim++; }
 	;
 
 type :
@@ -91,8 +102,6 @@ type :
 	| VOID { $$ = new Type("void"); }
 	/* User-defined types */
 	| ID { $$ = new Type(*$1); }
-	/* Array type declaration */
-	| type LBRACK RBRACK { $1->arr_dim++; }
 	;
 
 block :

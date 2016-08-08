@@ -5,21 +5,17 @@ class Rval;
 class Stmt;
 class Var_def;
 class Func_def;
+class Glob_var;
 
 typedef std::vector<Rval*> RvalList;
 typedef std::vector<Stmt*> StmtList;
 typedef std::vector<Var_def*> Var_defList;
 typedef std::vector<Func_def*> Func_defList;
+typedef std::vector<Glob_var*> Glob_varList;
 
 class Node {
 public:
     virtual ~Node() {}
-};
-
-class Program {
-public:
-    Func_defList& functions;
-    Program() : functions(*new Func_defList()) { }
 };
 
 class Rval : public Node {
@@ -28,10 +24,25 @@ class Rval : public Node {
 class Lval : public Rval {
 };
 
+class Program : public Node {
+public:
+    Func_defList& functions;
+    Glob_varList& global_vars;
+    Program() : functions(*new Func_defList()), global_vars(*new Glob_varList())
+        { }
+};
+
 class Id : public Lval {
 public:
     std::string id;
     Id(std::string id) : id(id) { /* TODO: check symbol table */ }
+};
+
+class Glob_var : public Node {
+public:
+    Id& id;
+    Rval& rval;
+    Glob_var(Id& id, Rval& rval) : id(id), rval(rval) { }
 };
 
 class Type : public Node {
