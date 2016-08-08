@@ -66,6 +66,10 @@ stmt :
 		$$ = new If(*$3, *$5, *new Block()); }
 	| IF LPAREN rval RPAREN block ELSE block {
 		$$ = new If(*$3, *$5, *$7); }
+	| FOR LPAREN rval RPAREN block {
+		$$ = new For("", *new Rval(), *$3, *new Stmt(), *$5); }
+	| FOR LPAREN ID ASSIGN rval SEMI rval SEMI stmt RPAREN block {
+		$$ = new For(*$3, *$5, *$7, *$9, *$11); }
 	;
 
 lval :

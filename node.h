@@ -44,6 +44,17 @@ public:
         condition(condition), if_block(if_block), else_block(else_block) { }
 };
 
+class For : public Stmt {
+public:
+    std::string id;
+    Rval& init;
+    Rval& condition;
+    Stmt& post;
+    Block& block;
+    For(std::string id, Rval& init, Rval& condition, Stmt& post, Block& block) :
+        id(id), init(init), condition(condition), post(post), block(block) { }
+};
+
 class Rval : public Node {
 };
 
