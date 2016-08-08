@@ -21,15 +21,16 @@
     Program *program;
     Func_def *func_def;
     Glob_var *glob_var;
+    Class_def *class_def;
 }
 
 /* Define our terminal symbols (tokens). This should
    match our tokens.l lex file. We also define the node type
    they represent.
  */
-%token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT
+%token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT CLASS_ID
 %token SEMI COMMA IF WHILE FOR RETURN DOT BOOL INT STRING CHAR DOUBLE ASSIGN
-%token CONTINUE FUNC VOID
+%token CONTINUE FUNC VOID CLASS
 
 %type <stmt> stmt
 %type <rval> rval
@@ -41,6 +42,7 @@
 %type <type> type type_def
 %type <func_def> func_def
 %type <glob_var> glob_var
+%type <class_def> class_def class_body
 %type <program> program
 
 /* Operator precedence for mathematical operators */
@@ -63,10 +65,22 @@ program :
 	func_def { $$ = new Program(); $$->functions.push_back($1);  }
 	| program func_def { $1->functions.push_back($2); }
 	| program glob_var { $1->global_vars.push_back($2); }
+	| program class_def { $1->classes.push_back($2); }
 	;
 
 glob_var :
 	ID ASSIGN rval SEMI { $$ = new Glob_var(*new Id(*$1), *$3); }
+	;
+
+class_def :
+	CLASS ID LPAREN params_opt RPAREN LBRACE class_body RBRACE {
+		$$ = $7; $$->id = *$2; $$->class_vars = *$4; }
+	;
+
+class_body :
+	/* nothing */ { $$ = new Class_def(); }
+	| class_body func_def { $1->class_funcs.push_back($2); }
+	;
 
 func_def :
 	FUNC ID LPAREN params_opt RPAREN block {
@@ -101,7 +115,7 @@ type :
 	| BOOL { $$ = new Type("bool"); }
 	| VOID { $$ = new Type("void"); }
 	/* User-defined types */
-	| ID { $$ = new Type(*$1); }
+	| CLASS_ID { $$ = new Type(*$1); }
 	;
 
 block :

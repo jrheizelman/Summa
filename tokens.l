@@ -36,6 +36,7 @@ extern "C" int yywrap() { return 1; }
 "continue"				return TOKEN(CONTINUE);
 "return"				return TOKEN(RETURN);
 "func"					return TOKEN(FUNC);
+"class"					return TOKEN(CLASS);
 "+"             		return TOKEN(PLUS);
 "-"             		return TOKEN(MINUS);
 "*"             		return TOKEN(MULT);
@@ -53,6 +54,7 @@ extern "C" int yywrap() { return 1; }
 "[0-9]+.[0-9]*"			SAVE_TOKEN; return DOUB_LIT;
 "[0-9]+"        		SAVE_TOKEN; return INT_LIT;
 "[a-z][a-z A-Z 0-9 _]*"	SAVE_TOKEN; return ID;
+"[A-Z][a-z A-Z 0-9 _]*" SAVE_TOKEN; return CLASS_ID;
 "."						return TOKEN(DOT);
 .              			printf("Unknown token!n"); yyterminate();
 
