@@ -1,6 +1,6 @@
 %{
     #include "node.h"
-    Node *program; /* the top level root node of our final AST */
+    Program *program; /* the top level root node of our final AST */
 
     extern int yylex();
     void yyerror(const char *s) { printf("ERROR: %sn", s); }
@@ -18,6 +18,8 @@
     Var_defList *params;
     Var_def *var_def;
     Type *type;
+    Program *program;
+    Func_def *func_def;
 }
 
 /* Define our terminal symbols (tokens). This should
@@ -36,6 +38,8 @@
 %type <params> params_opt params_list
 %type <var_def> var_def
 %type <type> type
+%type <func_def> func_def
+%type <program> program
 
 /* Operator precedence for mathematical operators */
 %nonassoc NOELSE
@@ -49,12 +53,18 @@
 %right NEG
 %left LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
 
-%start func_def
+%start program
 
 %%
 
+program :
+	func_def { $$ = new Program(); $$->functions.push_back($1);  }
+	| program func_def { $1->functions.push_back($2); }
+	;
+
 func_def :
-	FUNC ID LPAREN params_opt RPAREN block { }
+	FUNC ID LPAREN params_opt RPAREN block {
+		$$ = new Func_def(*new Id(*$2), *$4, *$6); }
 	;
 
 params_opt :

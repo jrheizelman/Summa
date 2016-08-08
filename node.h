@@ -2,17 +2,24 @@
 #include <vector>
 
 class Rval;
-class Lval;
 class Stmt;
 class Var_def;
+class Func_def;
 
 typedef std::vector<Rval*> RvalList;
 typedef std::vector<Stmt*> StmtList;
 typedef std::vector<Var_def*> Var_defList;
+typedef std::vector<Func_def*> Func_defList;
 
 class Node {
 public:
     virtual ~Node() {}
+};
+
+class Program {
+public:
+    Func_defList& functions;
+    Program() : functions(*new Func_defList()) { }
 };
 
 class Rval : public Node {
