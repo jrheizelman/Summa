@@ -15,7 +15,9 @@
     int token;
     Lval *lval;
     RvalList *actuals;
-
+    Var_defList *params;
+    Var_def *var_def;
+    Type *type;
 }
 
 /* Define our terminal symbols (tokens). This should
@@ -24,13 +26,16 @@
  */
 %token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT
 %token SEMI COMMA IF WHILE FOR RETURN DOT BOOL INT STRING CHAR DOUBLE ASSIGN
-%token CONTINUE
+%token CONTINUE FUNC
 
 %type <stmt> stmt
 %type <rval> rval
 %type <lval> lval
 %type <block> block stmt_list
 %type <actuals> actuals_opt actuals_list
+%type <params> params_opt params_list
+%type <var_def> var_def
+%type <type> type
 
 /* Operator precedence for mathematical operators */
 %nonassoc NOELSE
@@ -44,9 +49,37 @@
 %right NEG
 %left LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
 
-%start block
+%start func_def
 
 %%
+
+func_def :
+	FUNC ID LPAREN params_opt RPAREN block { }
+	;
+
+params_opt :
+	/* nothing */ { $$ = new Var_defList(); }
+	| params_list { $$ = $1; }
+	;
+
+params_list :
+	var_def { $$ = new Var_defList(); $$->push_back($1); }
+	| params_list COMMA var_def { $1->push_back($3); }
+	;
+
+var_def :
+	type ID { $$ = new Var_def(*$1, *new Id(*$2)); }
+	;
+
+type :
+	INT { $$ = new Type("int"); }
+	| DOUBLE { $$ = new Type("double"); }
+	| CHAR { $$ = new Type("char"); }
+	| STRING { $$ = new Type("string"); }
+	| BOOL { $$ = new Type("bool"); }
+	| ID { $$ = new Type(*$1); }
+	| type LBRACK RBRACK { $1->arr_dim++; }
+	;
 
 block :
 	LBRACE stmt_list RBRACE { $$ = $2; }
@@ -67,9 +100,9 @@ stmt :
 	| IF LPAREN rval RPAREN block ELSE block {
 		$$ = new If(*$3, *$5, *$7); }
 	| FOR LPAREN rval RPAREN block {
-		$$ = new For("", *new Rval(), *$3, *new Stmt(), *$5); }
-	| FOR LPAREN ID ASSIGN rval SEMI rval SEMI stmt RPAREN block {
-		$$ = new For(*$3, *$5, *$7, *$9, *$11); }
+		$$ = new For(*new Stmt(), *$3, *new Stmt(), *$5); }
+	| FOR LPAREN stmt SEMI rval SEMI stmt RPAREN block {
+		$$ = new For(*$3, *$5, *$7, *$9); }
 	;
 
 lval :

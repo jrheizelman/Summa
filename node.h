@@ -4,19 +4,56 @@
 class Rval;
 class Lval;
 class Stmt;
+class Var_def;
 
 typedef std::vector<Rval*> RvalList;
 typedef std::vector<Stmt*> StmtList;
+typedef std::vector<Var_def*> Var_defList;
 
 class Node {
 public:
     virtual ~Node() {}
 };
 
+class Rval : public Node {
+};
+
+class Lval : public Rval {
+};
+
+class Id : public Lval {
+public:
+    std::string id;
+    Id(std::string id) : id(id) { /* TODO: check symbol table */ }
+};
+
+class Type : public Node {
+public:
+    std::string id;
+    int arr_dim;
+    Type(std::string id) : id(id), arr_dim(0) { }
+};
+
+class Var_def : public Node {
+public:
+    Type& type;
+    Id& id;
+    Var_def(Type& type, Id& id) : type(type), id(id) { }
+};
+
 class Block : public Node {
 public:
-    StmtList stmt_list;
-    Block() { }
+    StmtList& stmt_list;
+    Block() : stmt_list(*new StmtList) { }
+};
+
+class Func_def : public Node {
+public:
+    Id& id;
+    Var_defList& params_list;
+    Block& block;
+    Func_def(Id& id, Var_defList& params_list, Block& block) :
+        id(id), params_list(params_list), block(block) { }
 };
 
 class Stmt : public Node {
@@ -46,25 +83,12 @@ public:
 
 class For : public Stmt {
 public:
-    std::string id;
-    Rval& init;
+    Stmt& init;
     Rval& condition;
     Stmt& post;
     Block& block;
-    For(std::string id, Rval& init, Rval& condition, Stmt& post, Block& block) :
-        id(id), init(init), condition(condition), post(post), block(block) { }
-};
-
-class Rval : public Node {
-};
-
-class Lval : public Rval {
-};
-
-class Id : public Lval {
-public:
-    std::string id;
-    Id(std::string id) : id(id) { /* TODO: check symbol table */ }
+    For(Stmt& init, Rval& condition, Stmt& post, Block& block) :
+        init(init), condition(condition), post(post), block(block) { }
 };
 
 class Access : public Lval {

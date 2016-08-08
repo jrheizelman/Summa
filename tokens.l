@@ -35,6 +35,7 @@ extern "C" int yywrap() { return 1; }
 "for"					return TOKEN(FOR);
 "continue"				return TOKEN(CONTINUE);
 "return"				return TOKEN(RETURN);
+"func"					return TOKEN(FUNC);
 "+"             		return TOKEN(PLUS);
 "-"             		return TOKEN(MINUS);
 "*"             		return TOKEN(MULT);
