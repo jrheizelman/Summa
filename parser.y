@@ -39,7 +39,9 @@
 %{
 	extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, void *yyscanner);
 	void yyerror(YYLTYPE *llocp, void *yyscanner, const char *s) {
-		printf("Error: %s\n", s); std::exit(1);
+		printf("Error: %d.%d-%d.%d: %s\n", llocp->first_line,
+			llocp->first_column, llocp->last_line, llocp->last_column, s);
+		std::exit(1);
 	}
 %}
 
