@@ -1,16 +1,28 @@
 %{
 #include <string>
-#include "node.h"
+#define SAVE_TOKEN yylval->string = new std::string(yytext, yyleng)
+#define TOKEN(t) (yylval->token = t)
+extern "C" int yywrap(void *scanner) { return 1; }
+%}
+
+%top{
 #include "parser.hpp"
-#define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
-#define TOKEN(t) (yylval.token = t)
-extern "C" int yywrap() { return 1; }
+}
+
+%option reentrant
+%option bison-bridge
+%option bison-locations
+%option outfile="tokens.cpp" header-file="tokens.hpp"
+%option yylineno
+
+%{
+#include "parser.hpp"
 %}
 
 %%
 
 [ tn]               	;
-"/\*[\n|.]*\*/"
+"/\*[\n|.]*\*/"			;
 "("             		return TOKEN(LPAREN);
 ")"             		return TOKEN(RPAREN);
 "{"						return TOKEN(LBRACE);
@@ -51,11 +63,11 @@ extern "C" int yywrap() { return 1; }
 "true"|"false"			SAVE_TOKEN; return BOOL_LIT;
 "\"[^\"]*\""			SAVE_TOKEN; return STRING_LIT;
 "\'[^']?\'"				SAVE_TOKEN; return CHAR_LIT;
-"[0-9]+.[0-9]*"			SAVE_TOKEN; return DOUB_LIT;
-"[0-9]+"        		SAVE_TOKEN; return INT_LIT;
-"[a-z][a-z A-Z 0-9 _]*"	SAVE_TOKEN; return ID;
-"[A-Z][a-z A-Z 0-9 _]*" SAVE_TOKEN; return CLASS_ID;
+[0-9]+.[0-9]*			SAVE_TOKEN; return DOUB_LIT;
+[0-9]+        			SAVE_TOKEN; return INT_LIT;
+[a-z][a-z A-Z 0-9 _]*	SAVE_TOKEN; return ID;
+[A-Z][a-z A-Z 0-9 _]* 	SAVE_TOKEN; return CLASS_ID;
 "."						return TOKEN(DOT);
-.              			printf("Unknown token!n"); yyterminate();
+.              			printf("Unknown token: %s\n", yytext); yyterminate();
 
 %%

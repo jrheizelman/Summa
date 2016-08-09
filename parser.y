@@ -1,10 +1,18 @@
-%{
-    #include "node.h"
-    Program *program; /* the top level root node of our final AST */
+%code requires{
+	#include "node.h"
 
-    extern int yylex();
-    void yyerror(const char *s) { printf("ERROR: %sn", s); }
-%}
+    /* An opaque pointer. */
+	#ifndef YY_TYPEDEF_YY_SCANNER_T
+	#define YY_TYPEDEF_YY_SCANNER_T
+	typedef void* yyscan_t;
+	#endif
+}
+
+%error-verbose
+%locations
+%define api.pure
+%lex-param {yyscan_t scanner}
+%parse-param {yyscan_t scanner}
 
 /* Represents the many different ways we can access our data */
 %union {
@@ -23,6 +31,17 @@
     Glob_var *glob_var;
     Class_def *class_def;
 }
+
+%{
+	Program *program;
+%}
+
+%{
+	extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, void *yyscanner);
+	void yyerror(YYLTYPE *llocp, void *yyscanner, const char *s) {
+		printf("Error: %s\n", s); std::exit(1);
+	}
+%}
 
 /* Define our terminal symbols (tokens). This should
    match our tokens.l lex file. We also define the node type
@@ -78,7 +97,7 @@ class_def :
 	;
 
 class_body :
-	/* nothing */ { $$ = new Class_def(); }
+	%empty { $$ = new Class_def(); }
 	| class_body func_def { $1->class_funcs.push_back($2); }
 	;
 
@@ -88,7 +107,7 @@ func_def :
 	;
 
 params_opt :
-	/* nothing */ { $$ = new Var_defList(); }
+	%empty { $$ = new Var_defList(); }
 	| params_list { $$ = $1; }
 	;
 
@@ -178,7 +197,7 @@ rval :
     ;
 
 actuals_opt:
-	/* nothing */ { $$ = new RvalList(); }
+	%empty { $$ = new RvalList(); }
 	| actuals_list { $$ = $1; }
 	;
 
