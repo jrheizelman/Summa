@@ -52,7 +52,7 @@
 %}
 
 [\t ]               	LOCATION_STEP(*yylloc);
-"/\*[\n|.]*\*/"			LOCATION_STEP(*yylloc);
+"/*"[\n.]*"*/"			LOCATION_STEP(*yylloc);
 \n+						LOCATION_LINES(*yylloc, yyleng); LOCATION_STEP(*yylloc);
 "("             		return TOKEN(LPAREN);
 ")"             		return TOKEN(RPAREN);
@@ -70,8 +70,8 @@
 "<"						return TOKEN(LTHAN);
 ">"						return TOKEN(GTHAN);
 "!"						return TOKEN(NOT);
-"&&"					return TOKEN(AND);
-"||"					return TOKEN(OR);
+"and"					return TOKEN(AND);
+"or"					return TOKEN(OR);
 "if"					return TOKEN(IF);
 "else"					return TOKEN(ELSE);
 "while"					return TOKEN(WHILE);
@@ -92,12 +92,12 @@
 "double"				return TOKEN(DOUBLE);
 "void"					return TOKEN(VOID);
 "true"|"false"			SAVE_TOKEN; return BOOL_LIT;
-"\"[^\"]*\""			SAVE_TOKEN; return STRING_LIT;
-"\'[^']?\'"				SAVE_TOKEN; return CHAR_LIT;
-[0-9]+.[0-9]*			SAVE_TOKEN; return DOUB_LIT;
+"\""[^\"]*"\""			printf("matched string\n"); SAVE_TOKEN; return STRING_LIT;
+"\'"[^\']?"\'"			SAVE_TOKEN; return CHAR_LIT; /*' color fix for sublime*/
+[0-9]+"."[0-9]*			SAVE_TOKEN; return DOUB_LIT;
 [0-9]+        			SAVE_TOKEN; return INT_LIT;
-[a-z][a-z A-Z 0-9 _]*	SAVE_TOKEN; return ID;
-[A-Z][a-z A-Z 0-9 _]* 	SAVE_TOKEN; return CLASS_ID;
+[a-z][a-zA-Z0-9\_]*		SAVE_TOKEN; return ID;
+[A-Z][a-zA-Z0-9\_]* 	SAVE_TOKEN; return CLASS_ID;
 "."						return TOKEN(DOT);
 .              			{
 							printf("Error: %d.%d-%d.%d: Unknown token\n",
