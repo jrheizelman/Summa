@@ -1,4 +1,4 @@
-all: parser
+all: summa
 
 OBJS = parser.o  \
 	tokens.o  \
@@ -8,7 +8,7 @@ CPPFLAGS = -std=c++11
 LDFLAGS = -lpthread -ldl -lz -lncurses -rdynamic
 
 clean:
-	$(RM) -rf parser.cpp parser.hpp parser tokens.cpp $(OBJS) tokens.hpp
+	$(RM) -rf parser.cpp parser.hpp summa tokens.cpp $(OBJS) tokens.hpp
 
 parser.cpp: parser.y
 	bison -d -o $@ $^
@@ -21,8 +21,5 @@ tokens.cpp: tokens.l
 %.o: %.cpp
 	g++ -c $(CPPFLAGS) -o $@ $<
 
-parser: $(OBJS)
+summa: $(OBJS)
 	g++ -o $@ $(OBJS) $(LDFLAGS)
-
-test: parser example.txt
-	cat example.txt | ./parser
