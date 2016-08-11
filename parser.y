@@ -33,10 +33,6 @@
 }
 
 %{
-	Program *program;
-%}
-
-%{
 	extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, void *yyscanner);
 	void yyerror(YYLTYPE *llocp, void *yyscanner, const char *s) {
 		printf("Error: %d.%d-%d.%d: %s\n", llocp->first_line,

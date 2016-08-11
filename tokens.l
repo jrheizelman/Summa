@@ -65,7 +65,8 @@ extern "C" int yywrap(void *scanner) { return 1; }
 "\'[^']?\'"				SAVE_TOKEN; return CHAR_LIT;
 [0-9]+.[0-9]*			SAVE_TOKEN; return DOUB_LIT;
 [0-9]+        			SAVE_TOKEN; return INT_LIT;
-[a-z][a-z A-Z 0-9 _]*	SAVE_TOKEN; return ID;
+#[a-z][a-z A-Z 0-9 _]*	SAVE_TOKEN; return ID;
+"id" 					SAVE_TOKEN; return ID;
 [A-Z][a-z A-Z 0-9 _]* 	SAVE_TOKEN; return CLASS_ID;
 "."						return TOKEN(DOT);
 .              			printf("Unknown token: %s\n", yytext); yyterminate();
