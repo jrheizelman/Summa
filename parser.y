@@ -148,7 +148,7 @@ stmt_list :
 stmt :
 	lval ASSIGN rval SEMI { $$ = new Assign(*$1, *$3); }
 	| RETURN rval SEMI { $$ = new Return(*$2); }
-	| rval SEMI { $$ = new Stmt(); }
+	| rval SEMI { }
 	| IF LPAREN rval RPAREN block %prec NOELSE {
 		$$ = new If(*$3, *$5, *new Block()); }
 	| IF LPAREN rval RPAREN block ELSE block {

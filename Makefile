@@ -23,3 +23,6 @@ tokens.cpp: tokens.l
 
 summa: $(OBJS)
 	g++ -o $@ $(OBJS) $(LDFLAGS)
+
+test: summa run_tests
+	./run_tests

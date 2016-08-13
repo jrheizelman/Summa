@@ -11,5 +11,5 @@ int main(int argc, char **argv)
     printf("Parsing successful\n");
     yylex_destroy(scanner);
     // std::cout << programBlock << std::endl;
-    return 0;
+    return 1;
 }
