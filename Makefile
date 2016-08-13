@@ -8,7 +8,7 @@ CPPFLAGS = -std=c++11
 LDFLAGS = -lpthread -ldl -lz -lncurses -rdynamic
 
 clean:
-	$(RM) -rf parser.cpp parser.hpp summa tokens.cpp $(OBJS) tokens.hpp
+	$(RM) -rf parser.cpp *.hpp summa tokens.cpp $(OBJS) testall.log
 
 parser.cpp: parser.y
 	bison -d -o $@ $^
