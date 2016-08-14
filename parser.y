@@ -65,6 +65,7 @@
 /* Operator precedence for mathematical operators */
 %nonassoc NOELSE
 %nonassoc ELSE
+%right ASSIGN
 %left DOT
 %left <token> OR AND
 %left <token> EQ NEQ LEQ GEQ LTHAN GTHAN
@@ -146,16 +147,16 @@ stmt_list :
 	;
 
 stmt :
-	lval ASSIGN rval SEMI { $$ = new Assign(*$1, *$3); }
-	| RETURN rval SEMI { $$ = new Return(*$2); }
+	// lval ASSIGN rval SEMI { $$ = new Assign(*$1, *$3); }
+	RETURN rval SEMI { $$ = new Return(*$2); }
 	| rval SEMI { }
 	| IF LPAREN rval RPAREN block %prec NOELSE {
 		$$ = new If(*$3, *$5, *new Block()); }
 	| IF LPAREN rval RPAREN block ELSE block {
 		$$ = new If(*$3, *$5, *$7); }
 	| FOR LPAREN rval RPAREN block {
-		$$ = new For(*new Stmt(), *$3, *new Stmt(), *$5); }
-	| FOR LPAREN stmt SEMI rval SEMI stmt RPAREN block {
+		$$ = new For(*new Rval(), *$3, *new Rval(), *$5); }
+	| FOR LPAREN rval SEMI rval SEMI rval RPAREN block {
 		$$ = new For(*$3, *$5, *$7, *$9); }
 	;
 
@@ -192,6 +193,7 @@ rval :
 	| rval GTHAN rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval OR rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval AND rval { $$ = new BinaryOperator(*$1, $2, *$3); }
+	| lval ASSIGN rval { $$ = new Rval(); }
     ;
 
 actuals_opt:

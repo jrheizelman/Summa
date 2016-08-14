@@ -89,13 +89,6 @@ public:
 class Stmt : public Node {
 };
 
-class Assign : public Stmt {
-public:
-    Lval& lval;
-    Rval& rval;
-    Assign(Lval& lval, Rval& rval) : lval(lval), rval(rval) { }
-};
-
 class Return : public Stmt {
 public:
     Rval& rval;
@@ -113,11 +106,11 @@ public:
 
 class For : public Stmt {
 public:
-    Stmt& init;
+    Rval& init;
     Rval& condition;
-    Stmt& post;
+    Rval& post;
     Block& block;
-    For(Stmt& init, Rval& condition, Stmt& post, Block& block) :
+    For(Rval& init, Rval& condition, Rval& post, Block& block) :
         init(init), condition(condition), post(post), block(block) { }
 };
 
@@ -139,6 +132,13 @@ class Int_lit : public Rval {
 public:
     long long value;
     Int_lit(long long value) : value(value) { }
+};
+
+class Assign : public Rval {
+public:
+    Lval& lval;
+    Rval& rval;
+    Assign(Lval& lval, Rval& rval) : lval(lval), rval(rval) { }
 };
 
 class Doub_lit : public Rval {
