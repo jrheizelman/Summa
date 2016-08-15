@@ -59,9 +59,11 @@ public:
 
 class Type : public Node {
 public:
-    std::string id;
+    std::string class_id;
+    int token;
     int arr_dim;
-    Type(std::string id) : id(id), arr_dim(0) { }
+    Type(std::string id) : class_id(id), arr_dim(0), token(0) { }
+    Type(int token) : class_id(""), arr_dim(0), token(token) { }
 };
 
 class Var_def : public Node {

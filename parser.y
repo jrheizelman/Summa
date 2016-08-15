@@ -46,8 +46,9 @@
    they represent.
  */
 %token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT CLASS_ID
-%token SEMI COMMA IF WHILE FOR RETURN DOT BOOL INT STRING CHAR DOUBLE ASSIGN
-%token CONTINUE FUNC VOID CLASS
+%token <token> BOOL INT STRING CHAR DOUBLE VOID
+%token SEMI COMMA IF WHILE FOR RETURN DOT ASSIGN
+%token CONTINUE FUNC CLASS
 
 %type <stmt> stmt
 %type <rval> rval
@@ -126,12 +127,12 @@ type_def : /* Needed to allow for array declarations */
 
 type :
 	/* Language-defined types */
-	INT { $$ = new Type("int"); }
-	| DOUBLE { $$ = new Type("double"); }
-	| CHAR { $$ = new Type("char"); }
-	| STRING { $$ = new Type("string"); }
-	| BOOL { $$ = new Type("bool"); }
-	| VOID { $$ = new Type("void"); }
+	INT { $$ = new Type($1); }
+	| DOUBLE { $$ = new Type($1); }
+	| CHAR { $$ = new Type($1); }
+	| STRING { $$ = new Type($1); }
+	| BOOL { $$ = new Type($1); }
+	| VOID { $$ = new Type($1); }
 	/* User-defined types */
 	| CLASS_ID { $$ = new Type(*$1); }
 	;
@@ -193,7 +194,7 @@ rval :
 	| rval GTHAN rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval OR rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval AND rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| lval ASSIGN rval { $$ = new Rval(); }
+	| lval ASSIGN rval { $$ = new Assign(*$1, *$3); }
     ;
 
 actuals_opt:
