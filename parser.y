@@ -155,8 +155,8 @@ stmt :
 		$$ = new If(*$3, *$5, *new Block()); }
 	| IF LPAREN rval RPAREN block ELSE block {
 		$$ = new If(*$3, *$5, *$7); }
-	| FOR LPAREN rval RPAREN block {
-		$$ = new For(*new Rval(*new Type(0)), *$3, *new Rval(*new Type(0)), *$5); }
+	| FOR LPAREN rval RPAREN block { $$ =
+		new For(*new Rval(*new Type(0)), *$3, *new Rval(*new Type(0)), *$5); }
 	| FOR LPAREN rval SEMI rval SEMI rval RPAREN block {
 		$$ = new For(*$3, *$5, *$7, *$9); }
 	;
@@ -172,7 +172,8 @@ rval :
 	INT_LIT { $$ = new Int_lit(atol($1->c_str()), INT); delete $1; }
 	| DOUB_LIT { $$ = new Doub_lit(atof($1->c_str()), DOUBLE); delete $1; }
 	| CHAR_LIT { $$ = new Char_lit($1->c_str()[1], CHAR); delete $1; }
-	| STRING_LIT { $$ = new Str_lit($1->substr(0, $1->length()-2), STRING); delete $1; }
+	| STRING_LIT { $$ = new Str_lit($1->substr(0, $1->length()-2), STRING);
+		delete $1; }
 	| BOOL_LIT { $$ = new Bool_lit($1->compare("true"), BOOL); delete $1; }
 	/* Accesses and function calls */
 	| lval { $$ = new Access_lval(*$1); }
@@ -181,7 +182,15 @@ rval :
 	| MINUS rval %prec NEG { $$ = new UnaryOperator($1, *$2); }
 	| NOT rval { $$ = new UnaryOperator($1, *$2); }
 	/* Binary operations */
-	| rval PLUS rval { $$ = new BinaryOperator(*$1, $2, *$3); }
+	| rval PLUS rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
 	| rval MULT rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval MINUS rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval DIV rval { $$ = new BinaryOperator(*$1, $2, *$3); }

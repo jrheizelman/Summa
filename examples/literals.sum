@@ -1,0 +1,9 @@
+func main()	{
+	str = "string";
+	c = 'c';
+	i = 0;
+	dub = 0.0;
+	bo = true;
+}
+
+glob = "global var";

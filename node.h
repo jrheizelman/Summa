@@ -15,6 +15,11 @@ typedef std::vector<Func_def*> Func_defList;
 typedef std::vector<Glob_var*> Glob_varList;
 typedef std::vector<Class_def*> Class_defList;
 
+#ifndef TYPE_MISMATCH_EX
+#define TYPE_MISMATCH_EX
+class type_mismatch: public std::exception { };
+#endif
+
 class Node {
 public:
     virtual ~Node() {}
@@ -29,14 +34,18 @@ public:
     Type(int token) : class_id(""), arr_dim(0), token(token) { }
 
     bool operator==(const Type& other) const {
-        if(arr_dim != other.arr_dim)
+        if(arr_dim != other.arr_dim)    {
             return false;
-        else if(token != 0 && token == other.token)
+        }
+        else if(token != 0 && token == other.token) {
             return true;
-        else if(token == 0 || other.token == 0)
+        }
+        else if(token != 0 || other.token != 0) {
             return false;
-        else if(! class_id.compare(other.class_id)) //string ids are the same
+        }
+        else if(! class_id.compare(other.class_id)) { //string ids are the same
             return true;
+        }
         return false;
     }
     bool operator!=(const Type& other) const {
@@ -213,8 +222,9 @@ public:
     BinaryOperator(Rval& lhs, int op, Rval& rhs) :
         lhs(lhs), rhs(rhs), op(op), Rval(lhs.type) {
             if(lhs.type != rhs.type)    {
-
+                throw type_mismatch();
             }
+            printf("Type lhs: %d, type rhs: %d\n", lhs.type.token, rhs.type.token);
         }
 };
 
