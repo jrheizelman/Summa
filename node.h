@@ -20,17 +20,46 @@ public:
     virtual ~Node() {}
 };
 
+class Type : public Node {
+public:
+    std::string class_id;
+    int token;
+    int arr_dim;
+    Type(std::string id) : class_id(id), arr_dim(0), token(0) { }
+    Type(int token) : class_id(""), arr_dim(0), token(token) { }
+
+    bool operator==(const Type& other) const {
+        if(arr_dim != other.arr_dim)
+            return false;
+        else if(token != 0 && token == other.token)
+            return true;
+        else if(token == 0 || other.token == 0)
+            return false;
+        else if(! class_id.compare(other.class_id)) //string ids are the same
+            return true;
+        return false;
+    }
+    bool operator!=(const Type& other) const {
+        return ! (*this == other);
+    }
+};
+
 class Rval : public Node {
+public:
+    Type& type;
+    Rval(Type& type) : type(type) { }
 };
 
 class Lval : public Rval {
+public:
+    Lval(Type& type) : Rval(type) { }
 };
 
 class Program : public Node {
 public:
-    Func_defList& functions;
-    Glob_varList& global_vars;
-    Class_defList& classes;
+    Func_defList functions;
+    Glob_varList global_vars;
+    Class_defList classes;
     Program() : functions(*new Func_defList()),
         global_vars(*new Glob_varList()), classes(*new Class_defList()) { }
 };
@@ -38,7 +67,7 @@ public:
 class Id : public Lval {
 public:
     std::string id;
-    Id(std::string id) : id(id) { /* TODO: check symbol table */ }
+    Id(std::string id) : id(id), Lval(*new Type(0)) { /* TODO: check table */ }
 };
 
 class Glob_var : public Node {
@@ -55,15 +84,6 @@ public:
     Func_defList& class_funcs;
     Class_def() : class_vars(*new Var_defList()),
     class_funcs(*new Func_defList()) { }
-};
-
-class Type : public Node {
-public:
-    std::string class_id;
-    int token;
-    int arr_dim;
-    Type(std::string id) : class_id(id), arr_dim(0), token(0) { }
-    Type(int token) : class_id(""), arr_dim(0), token(token) { }
 };
 
 class Var_def : public Node {
@@ -120,64 +140,69 @@ class Access : public Lval {
 public:
     Lval& lhs;
     Lval& rhs;
-    Access(Lval& lhs, Lval& rhs) : lhs(lhs), rhs(rhs) { }
+    Access(Lval& lhs, Lval& rhs) : lhs(lhs), rhs(rhs), Lval(*new Type(0)) { }
 };
 
 class Access_arr : public Lval {
 public:
     Lval& lval;
     Rval& index;
-    Access_arr(Lval& lval, Rval& index) : lval(lval), index(index) { }
-};
-
-class Int_lit : public Rval {
-public:
-    long long value;
-    Int_lit(long long value) : value(value) { }
+    Access_arr(Lval& lval, Rval& index) : lval(lval), index(index),
+        Lval(*new Type(0)) { }
 };
 
 class Assign : public Rval {
 public:
     Lval& lval;
     Rval& rval;
-    Assign(Lval& lval, Rval& rval) : lval(lval), rval(rval) { }
+    Assign(Lval& lval, Rval& rval, Type& type) :
+        lval(lval), rval(rval), Rval(type) { }
+};
+
+class Int_lit : public Rval {
+public:
+    long long value;
+    Int_lit(long long value, int token) :
+        value(value), Rval(*new Type(token)) { }
 };
 
 class Doub_lit : public Rval {
 public:
     double value;
-    Doub_lit(double value) : value(value) { }
+    Doub_lit(double value, int token) : value(value), Rval(*new Type(token)) { }
 };
 
 class Char_lit : public Rval {
 public:
     char value;
-    Char_lit(char value) : value(value) { }
+    Char_lit(char value, int token) : value(value), Rval(*new Type(token)) { }
 };
 
 class Bool_lit : public Rval {
 public:
     bool value;
-    Bool_lit(bool value) : value(value) { }
+    Bool_lit(bool value, int token) : value(value), Rval(*new Type(token)) { }
 };
 
 class Str_lit : public Rval {
 public:
     std::string value;
-    Str_lit(std::string value) : value(value) { }
+    Str_lit(std::string value, int token) :
+        value(value), Rval(*new Type(token)) { }
 };
 
 class Access_lval : public Rval {
 public:
     Lval& lval;
-    Access_lval(Lval& lval) : lval(lval) { }
+    Access_lval(Lval& lval) : lval(lval), Rval(*new Type(0)) { }
 };
 
 class Func_call : public Rval {
 public:
     Lval& func;
     RvalList& actuals;
-    Func_call(Lval& func, RvalList& actuals) : func(func), actuals(actuals) { }
+    Func_call(Lval& func, RvalList& actuals) :
+        func(func), actuals(actuals), Rval(*new Type(0)) { }
 };
 
 class BinaryOperator : public Rval {
@@ -186,7 +211,11 @@ public:
     Rval& lhs;
     Rval& rhs;
     BinaryOperator(Rval& lhs, int op, Rval& rhs) :
-        lhs(lhs), rhs(rhs), op(op) { }
+        lhs(lhs), rhs(rhs), op(op), Rval(lhs.type) {
+            if(lhs.type != rhs.type)    {
+
+            }
+        }
 };
 
 class UnaryOperator : public Rval {
@@ -194,5 +223,5 @@ public:
     int op;
     Rval& rval;
     UnaryOperator(int op, Rval& rval) :
-        op(op), rval(rval) { }
+        op(op), rval(rval), Rval(rval.type) { }
 };

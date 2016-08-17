@@ -139,7 +139,7 @@ type :
 
 block :
 	LBRACE stmt_list RBRACE { $$ = $2; }
-	| LBRACE RBRACE { $$ = new Block(); }
+	| LBRACE RBRACE { $$ = NULL; }
 	;
 
 stmt_list :
@@ -156,7 +156,7 @@ stmt :
 	| IF LPAREN rval RPAREN block ELSE block {
 		$$ = new If(*$3, *$5, *$7); }
 	| FOR LPAREN rval RPAREN block {
-		$$ = new For(*new Rval(), *$3, *new Rval(), *$5); }
+		$$ = new For(*new Rval(*new Type(0)), *$3, *new Rval(*new Type(0)), *$5); }
 	| FOR LPAREN rval SEMI rval SEMI rval RPAREN block {
 		$$ = new For(*$3, *$5, *$7, *$9); }
 	;
@@ -169,11 +169,11 @@ lval :
 
 rval :
 	/* Literals */
-	INT_LIT { $$ = new Int_lit(atol($1->c_str())); delete $1; }
-	| DOUB_LIT { $$ = new Doub_lit(atof($1->c_str())); delete $1; }
-	| CHAR_LIT { $$ = new Char_lit($1->c_str()[1]); delete $1; }
-	| STRING_LIT { $$ = new Str_lit($1->substr(0, $1->length()-2)); delete $1; }
-	| BOOL_LIT { $$ = new Bool_lit($1->compare("true")); delete $1; }
+	INT_LIT { $$ = new Int_lit(atol($1->c_str()), INT); delete $1; }
+	| DOUB_LIT { $$ = new Doub_lit(atof($1->c_str()), DOUBLE); delete $1; }
+	| CHAR_LIT { $$ = new Char_lit($1->c_str()[1], CHAR); delete $1; }
+	| STRING_LIT { $$ = new Str_lit($1->substr(0, $1->length()-2), STRING); delete $1; }
+	| BOOL_LIT { $$ = new Bool_lit($1->compare("true"), BOOL); delete $1; }
 	/* Accesses and function calls */
 	| lval { $$ = new Access_lval(*$1); }
 	| lval LPAREN actuals_opt RPAREN { $$ = new Func_call(*$1, *$3); }
@@ -194,7 +194,7 @@ rval :
 	| rval GTHAN rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval OR rval { $$ = new BinaryOperator(*$1, $2, *$3); }
 	| rval AND rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| lval ASSIGN rval { $$ = new Assign(*$1, *$3); }
+	// | lval ASSIGN rval { $$ = new Assign(*$1, *$3); }
     ;
 
 actuals_opt:

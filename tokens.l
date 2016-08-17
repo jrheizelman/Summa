@@ -9,22 +9,22 @@
 #include "parser.hpp"
 
 /* Initialize LOC. */
-# define LOCATION_RESET(Loc)                  \
+#define LOCATION_RESET(Loc)                  \
 	(Loc).first_column = (Loc).first_line = 1;  \
 	(Loc).last_column =  (Loc).last_line = 1;
 
 /* Advance of NUM lines. */
-# define LOCATION_LINES(Loc, Num)             \
+#define LOCATION_LINES(Loc, Num)             \
 	(Loc).last_column = 1;                      \
 	(Loc).last_line += Num;
 
 /* Restart: move the first cursor to the last position. */
-# define LOCATION_STEP(Loc)                   \
+#define LOCATION_STEP(Loc)                   \
 	(Loc).first_column = (Loc).last_column;     \
 	(Loc).first_line = (Loc).last_line;
 
 /* Output LOC on the stream OUT. */
-# define LOCATION_PRINT(Out, Loc)							\
+#define LOCATION_PRINT(Out, Loc)							\
 	if ((Loc).first_line != (Loc).last_line)				\
 		fprintf (Out, "%d.%d-%d.%d",						\
 			(Loc).first_line, (Loc).first_column,			\
@@ -34,6 +34,12 @@
 			(Loc).first_column, (Loc).last_column - 1);		\
 	else													\
 		fprintf (Out, "%d.%d", (Loc).first_line, (Loc).first_column)
+
+#define PRINT_ERROR(Text)	\
+	printf("Error: %d.%d-%d.%d: %s\n",	\
+		yylloc->first_line, yylloc->first_column,	\
+		yylloc->last_line, yylloc->last_column, Text);	\
+	std::exit(1);
 }
 
 %option reentrant
@@ -99,11 +105,6 @@
 [a-z][a-zA-Z0-9_]*		SAVE_TOKEN; return ID;
 [A-Z][a-zA-Z0-9_]* 		SAVE_TOKEN; return CLASS_ID;
 "."						return TOKEN(DOT);
-.              			{
-							printf("Error: %d.%d-%d.%d: Unknown token\n",
-								yylloc->first_line, yylloc->first_column,
-								yylloc->last_line, yylloc->last_column);
-							std::exit(1);
-						}
+.              			PRINT_ERROR("Unknown token");
 
 %%
