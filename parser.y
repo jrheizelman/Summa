@@ -182,6 +182,7 @@ rval :
 	| MINUS rval %prec NEG { $$ = new UnaryOperator($1, *$2); }
 	| NOT rval { $$ = new UnaryOperator($1, *$2); }
 	/* Binary operations */
+	//TODO: Find a way to reuse this code...
 	| rval PLUS rval { try {
 			printf("Trying to create\n");
 			$$ = new BinaryOperator(*$1, $2, *$3);
@@ -191,19 +192,115 @@ rval :
 				yylloc.last_line, yylloc.last_column);	\
 			std::exit(1);
 		} }
-	| rval MULT rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval MINUS rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval DIV rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval MOD rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval EQ rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval NEQ rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval LEQ rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval GEQ rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval LTHAN rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval GTHAN rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval OR rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	| rval AND rval { $$ = new BinaryOperator(*$1, $2, *$3); }
-	// | lval ASSIGN rval { $$ = new Assign(*$1, *$3); }
+	| rval MULT rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval MINUS rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval DIV rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval MOD rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval EQ rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval NEQ rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval LEQ rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval GEQ rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval LTHAN rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval GTHAN rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval OR rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| rval AND rval { try {
+			printf("Trying to create\n");
+			$$ = new BinaryOperator(*$1, $2, *$3);
+		}	catch(std::exception& e)	{
+			printf("Error: %d.%d-%d.%d: Types do not match.\n",	\
+				yylloc.first_line, yylloc.first_column,	\
+				yylloc.last_line, yylloc.last_column);	\
+			std::exit(1);
+		} }
+	| lval ASSIGN rval { $$ = new Assign(*$1, *$3, (*$3).type); }
     ;
 
 actuals_opt:
