@@ -10,7 +10,13 @@ type rval =
 | Bin_op of rval * bop * rval
 | Un_op of uop * rval
 
-type program = rval list
+type lval =
+  Id of string
+
+type stmt =
+  Assign of lval * rval
+
+type program = stmt list
 
 (*************************
 **** PRINT AST **********
@@ -43,5 +49,11 @@ let rec string_of_rval = function
     " " ^ string_of_rval r2 ^ " }"
 | Un_op(u, r) -> "un_op { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"
 
+let string_of_lval = function
+  Id(i) -> "id " ^ i
+
+let string_of_stmt = function
+  Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " }"
+
 let string_of_prog prog =
-  String.concat ";\n" (List.map string_of_rval prog) ^ ";"
+  String.concat ";\n" (List.map string_of_stmt prog) ^ ";"

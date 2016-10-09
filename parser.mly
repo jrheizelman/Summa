@@ -15,13 +15,13 @@ let parse_error s = (* Called by the parser function on error *)
 %}
 
 %token LPAREN RPAREN
-%token INT DOUBLE BOOL
 %token PLUS TIMES MINUS DIVIDE MOD
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
-%token EOF SEMI
+%token SEMI ASSIGN EOF
 %token <int> INTLIT
 %token <bool> BOOLLIT
 %token <float> DOUBLELIT
+%token <string> ID
 
 /* state precedence of tokens - need this to avoid shift/reduce conflicts */
 /* goes from least to most important in precedence */
@@ -30,9 +30,7 @@ let parse_error s = (* Called by the parser function on error *)
 %left LEQ GEQ LTHAN GTHAN
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
-%right NOT
 %right NEG
-%left LPAREN RPAREN
 
 %start program
 %type <Ast.program> program
@@ -44,6 +42,7 @@ rval:
 | DOUBLELIT   { Double_lit($1) }
 /* Unary operations */
 | MINUS rval %prec NEG    { Un_op(Neg, $2) }
+| NOT rval %prec NEG    { Un_op(Not, $2) }
 /* Binary operations */
 | rval PLUS rval    { Bin_op($1, Add, $3) }
 | rval MINUS rval    { Bin_op($1, Sub, $3) }
@@ -58,7 +57,17 @@ rval:
 | rval GTHAN rval   { Bin_op($1, Greater, $3) }
 | rval OR rval   { Bin_op($1, Or, $3) }
 | rval AND rval   { Bin_op($1, And, $3) }
+| LPAREN rval RPAREN  { $2 }
+
+lval:
+  ID  { Id($1) }
+
+stmt:
+  lval ASSIGN rval SEMI   { Assign($1, $3) }
+
+stmt_list:
+  /* nothing */   { [] }
+| stmt_list stmt { $2 :: $1 }
 
 program:
-  /* nothing */   { [] }
-| program rval SEMI { $2 :: $1 }
+  stmt_list EOF   { $1 }

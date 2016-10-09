@@ -2,7 +2,7 @@
 
 set -e
 
-make > /dev/null
+make new > /dev/null
 
 for f in examples/*
 do

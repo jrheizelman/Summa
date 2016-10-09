@@ -1,19 +1,6 @@
 open Ast
-
-(* SAST *)
-
-type valid_type = Int | Bool | Double
-
-type rval_t =
-  Int_lit_t of int
-| Bool_lit_t of bool
-| Double_lit_t of float
-| Bin_op_t of valid_type * rval_t * bop * rval_t
-| Un_op_t of valid_type * uop * rval_t
-
-type program_t = rval_t list
-
-(* SEMANTIC CHECK *)
+open Sast
+open Symbol_table
 
 let string_of_valid_type = function
 	Int -> "int"
@@ -87,5 +74,9 @@ let rec check_rval (r:rval) =
 	 | Int_lit(i) -> Int_lit_t(i)
 	 | Double_lit(d) -> Double_lit_t(d)
 
+let check_stmt (s:stmt) =
+	match s with
+		Assign(l, r) -> Symbol_table.symbol_table_add_lval l (type_of_rval_t (check_rval r))
+
 let check_program (p:program) =
-	List.map check_rval p
+	List.map check_stmt p
