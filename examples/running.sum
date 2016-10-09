@@ -1,3 +1,6 @@
 i = 9 - 101 * 7 < 128 and true;
 h = 1;
-r = 2;
+roll = 2;
+rello = true;
+l = 9;
+l = true;
