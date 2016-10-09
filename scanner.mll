@@ -6,6 +6,7 @@ let id = ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
 rule token = parse
 [' ' '\t' 'r' '\n'] { token lexbuf }
 | "/*" { comment lexbuf }
+| ";" { SEMI }
 | '(' { LPAREN }
 | ')' { RPAREN }
 | '+' { PLUS }
@@ -18,9 +19,8 @@ rule token = parse
 | ">=" { GEQ }
 | '<' { LTHAN }
 | '>' { GTHAN }
-| "int" { INT }
-| "double" { DOUBLE }
-| "bool" { BOOL }
+| "or" { OR }
+| "and" { AND }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
 | ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLIT(float_of_string lxm)}
 | ['0'-'9']+ as lxm { INTLIT(int_of_string lxm)}

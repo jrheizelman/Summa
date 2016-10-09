@@ -1,3 +1,0 @@
-func id()	{
-	return 0;
-}

@@ -1,5 +1,0 @@
-func main(){}
-
-class Test(){
-	func test_case() { }
-}

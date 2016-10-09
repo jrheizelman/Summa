@@ -25,6 +25,6 @@ let _ =
       let lexbuf = Lexing.from_channel input in
       let program = Parser.program Scanner.token lexbuf in
       match action with
-          Ast -> let listing = Ast.string_of_prog program
-                 in print_string listing
+          Ast -> let prog_string = Ast.string_of_prog program
+                 in print_endline prog_string
         | Help -> print_endline (usage Sys.argv.(0)) (* impossible case *)

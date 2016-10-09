@@ -14,58 +14,35 @@ let parse_error s = (* Called by the parser function on error *)
 
 %}
 
-%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK SEMI ASSIGN
-%token RETURN INT CHAR STRING DOUBLE COMMA
-%token PLUS TIMES MINUS DIVIDE MOD NOT EQ NEQ LEQ GEQ LTHAN GTHAN
-%token AND OR IF ELSE WHILE FOR RETURN CONTINUE BREAK
-%token BOOL DOT EOF DEF CLASS
+%token LPAREN RPAREN
+%token INT DOUBLE BOOL
+%token PLUS TIMES MINUS DIVIDE MOD
+%token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
+%token EOF SEMI
 %token <int> INTLIT
 %token <bool> BOOLLIT
 %token <float> DOUBLIT
-%token <string> ID STRINGLIT CHARLIT
 
 /* state precedence of tokens - need this to avoid shift/reduce conflicts */
 /* goes from least to most important in precedence */
-%nonassoc NOELSE
-%nonassoc ELSE
-%right ASSIGN
-%left OR
-%left AND
+%left AND OR
 %left EQ NEQ
 %left LEQ GEQ LTHAN GTHAN
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
 %right NOT
 %right NEG
-%left LPAREN RPAREN LBRACK RBRACK
+%left LPAREN RPAREN
 
 %start program
 %type <Ast.program> program
 %%
 
-stmt:
-  lval ASSIGN rval SEMI   { Assign($1, $3) }
-| RETURN rval SEMI    { Return($2) }
-| rval SEMI   { Expr($1) }
-| IF LPAREN rval RPAREN block %prec NOELSE
-  { If($3, $5, { statements = []; block_num = scope.contents } ) }
-| IF LPAREN rval RPAREN block ELSE block    { If ($3, $5, $7) }
-| WHILE LPAREN rval RPAREN block    { While($3, $5) }
-
-lval:
-  ID    { Id($1) }
-/*| ID DOT lval   { Access($1, $3) }*/
-/*| ID LBRACK rval RBRACK                     { Access_arr($1, $3) }*/
-
 rval:
-  lval    { Access_lval($1) }
-| CHARLIT   { Char_lit($1) }
-| INTLIT    { Int_lit($1) }
-| STRINGLIT   { String_lit($1) }
+  INTLIT    { Int_lit($1) }
 | BOOLLIT   { Bool_lit($1) }
-| lval LPAREN actuals_opt RPAREN   { Func_call($1, $3) }
+| DOUBLIT   { Doub_lit($1) }
 /* Unary operations */
-| NOT rval    { Un_op(Not, $2) }
 | MINUS rval %prec NEG    { Un_op(Neg, $2) }
 /* Binary operations */
 | rval PLUS rval    { Bin_op($1, Add, $3) }
@@ -82,49 +59,6 @@ rval:
 | rval OR rval   { Bin_op($1, Or, $3) }
 | rval AND rval   { Bin_op($1, And, $3) }
 
-actuals_opt:
-  /* nothing */  { [] }
-| actuals_list { List.rev $1 }
-
-actuals_list:
-  rval                      { [$1] }
-| actuals_list COMMA rval { $3 :: $1 }
-
-func_def:
-  DEF ID LPAREN params_opt RPAREN block   { { fname = $2;
-                                              params = $4;
-                                              fblock = $6; } }
-
-block:
-  LBRACE stmt_list RBRACE   { { statements = List.rev $2;
-                                block_num = inc_block_num() } }
-
-stmt_list:
-  /* nothing */   { [] }
-| stmt_list stmt  { $2 :: $1 }
-
-params_opt:
-  /* nothing */   { [] }
-| params_list   { List.rev $1 }
-
-params_list:
-  param_def   { [$1] }
-| params_list COMMA param_def   { $3 :: $1 }
-
-param_def:
-  type_decl ID    { ($1, $2) }
-
-type_decl:
-  INT     { Int }
-| CHAR    { Char }
-| STRING    { String }
-| BOOL    { Bool }
-| DOUBLE    { Double }
-
-glb_vdecl:
-  lval ASSIGN rval SEMI   { ($1, $3) }
-
 program:
-  /* nothing */   { [], [] }
-| program glb_vdecl { ($2 :: fst $1), snd $1 }
-| program func_def { fst $1, ($2 :: snd $1) }
+  /* nothing */   { [] }
+| program rval SEMI { $2 :: $1 }

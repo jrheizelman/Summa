@@ -1,4 +1,10 @@
-for f in tests/*
+#!/bin/bash
+
+set -e
+
+make > /dev/null
+
+for f in examples/*
 do
-	echo "$1 $f"
+	./summa -a $f
 done
