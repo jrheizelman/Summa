@@ -13,6 +13,7 @@ let type_of_rval_t = function
 | Double_lit_t(_) -> Double
 | Bin_op_t(t, _, _, _) -> t
 | Un_op_t(t, _, _) -> t
+| Access_lval_t(t, _) -> t
 
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
@@ -62,22 +63,23 @@ let check_unop (r:rval_t) (op:uop) =
           | _ -> unop_err t op)
      | _ -> unop_err t op
 
-let rec check_rval (r:rval) =
+let rec check_rval (r:rval) env =
   match r with
    Bin_op(r1, op, r2) ->
-    let(ce1, ce2) = (check_rval r1, check_rval r2) in
+    let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
       check_binop ce1 ce2 op
    | Un_op(op, r) ->
-    let cr = check_rval r in
+    let cr = check_rval r env in
       check_unop cr op
    | Bool_lit(b) -> Bool_lit_t(b)
    | Int_lit(i) -> Int_lit_t(i)
    | Double_lit(d) -> Double_lit_t(d)
+   | Access_lval(l) -> symbol_table_access_lval l env
 
 let check_stmt env (s:stmt) =
   match s with
-    Assign(l, r) -> Symbol_table.symbol_table_add_lval l (type_of_rval_t (check_rval r)) env
-  | Rval(r) -> ignore (check_rval r); env
+    Assign(l, r) -> symbol_table_add_lval l (type_of_rval_t (check_rval r env)) env
+  | Rval(r) -> ignore (check_rval r env); env
 
 let check_program (p:program) =
   List.fold_left check_stmt ((Hashtbl.create 1000), 0) p

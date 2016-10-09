@@ -3,15 +3,16 @@ type bop = Equal | Neq | Leq | Geq | Greater | Less | And | Or
 
 type uop = Neg | Not
 
+type lval =
+  Id of string
+
 type rval =
   Int_lit of int
 | Bool_lit of bool
 | Double_lit of float
 | Bin_op of rval * bop * rval
 | Un_op of uop * rval
-
-type lval =
-  Id of string
+| Access_lval of lval
 
 type stmt =
   Assign of lval * rval
@@ -42,6 +43,9 @@ let string_of_unop = function
   Neg -> "-"
 | Not -> "!"
 
+let string_of_lval = function
+  Id(i) -> "id " ^ i
+
 let rec string_of_rval = function
   Int_lit(i) -> "int_lit " ^ string_of_int i
 | Bool_lit(b) -> "bool_lit " ^ string_of_bool b
@@ -49,9 +53,7 @@ let rec string_of_rval = function
 | Bin_op(r1, b, r2) -> "bin_op { " ^ string_of_rval r1 ^ " " ^ string_of_bop b ^
     " " ^ string_of_rval r2 ^ " }"
 | Un_op(u, r) -> "un_op { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"
-
-let string_of_lval = function
-  Id(i) -> "id " ^ i
+| Access_lval(l) -> "access " ^ string_of_lval l
 
 let string_of_stmt = function
   Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " };"

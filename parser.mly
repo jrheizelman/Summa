@@ -58,6 +58,7 @@ rval:
 | rval OR rval   { Bin_op($1, Or, $3) }
 | rval AND rval   { Bin_op($1, And, $3) }
 | LPAREN rval RPAREN  { $2 }
+| lval  { Access_lval($1) }
 
 lval:
   ID  { Id($1) }
