@@ -1,0 +1,16 @@
+def main()	{
+	x = 5;
+	y = "hello";
+	main();
+	if(true)	{
+		x = 6;
+	}
+	if(false)	{
+		x = 7;
+	}
+	else	{
+		x = 8;
+	}
+	return main;
+	return;
+}

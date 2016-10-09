@@ -45,8 +45,8 @@
    match our tokens.l lex file. We also define the node type
    they represent.
  */
-%token <string> ID INT_LIT DOUB_LIT BOOL_LIT CHAR_LIT STRING_LIT CLASS_ID
-%token <token> BOOL INT STRING CHAR DOUBLE VOID
+%token <string> ID INT_LIT DOUB_LIT BOOL_LIT CLASS_ID
+%token <token> BOOL INT DOUBLE VOID
 %token SEMI COMMA IF WHILE FOR RETURN DOT ASSIGN
 %token CONTINUE FUNC CLASS
 
@@ -129,8 +129,6 @@ type :
 	/* Language-defined types */
 	INT { $$ = new Type($1); }
 	| DOUBLE { $$ = new Type($1); }
-	| CHAR { $$ = new Type($1); }
-	| STRING { $$ = new Type($1); }
 	| BOOL { $$ = new Type($1); }
 	| VOID { $$ = new Type($1); }
 	/* User-defined types */
@@ -171,9 +169,6 @@ rval :
 	/* Literals */
 	INT_LIT { $$ = new Int_lit(atol($1->c_str()), INT); delete $1; }
 	| DOUB_LIT { $$ = new Doub_lit(atof($1->c_str()), DOUBLE); delete $1; }
-	| CHAR_LIT { $$ = new Char_lit($1->c_str()[1], CHAR); delete $1; }
-	| STRING_LIT { $$ = new Str_lit($1->substr(0, $1->length()-2), STRING);
-		delete $1; }
 	| BOOL_LIT { $$ = new Bool_lit($1->compare("true"), BOOL); delete $1; }
 	/* Accesses and function calls */
 	| lval { $$ = new Access_lval(*$1); }

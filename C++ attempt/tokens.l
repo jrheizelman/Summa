@@ -92,14 +92,10 @@
 "/"             		return TOKEN(DIV);
 "%"						return TOKEN(MOD);
 "bool"					return TOKEN(BOOL);
-"string"				return TOKEN(STRING);
-"char"					return TOKEN(CHAR);
 "int"					return TOKEN(INT);
 "double"				return TOKEN(DOUBLE);
 "void"					return TOKEN(VOID);
 "true"|"false"			SAVE_TOKEN; return BOOL_LIT;
-"\"[^\"]*\""			SAVE_TOKEN; return STRING_LIT;
-"\'[^']?\'"				SAVE_TOKEN; return CHAR_LIT;
 [0-9]+"."[0-9]*			SAVE_TOKEN; return DOUB_LIT;
 [0-9]+        			SAVE_TOKEN; return INT_LIT;
 [a-z][a-zA-Z0-9_]*		SAVE_TOKEN; return ID;
