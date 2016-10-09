@@ -72,4 +72,4 @@ stmt_list:
 | stmt_list stmt { $2 :: $1 }
 
 program:
-  stmt_list EOF   { $1 }
+  stmt_list EOF   { List.rev $1 }
