@@ -1,4 +1,4 @@
-OBJS = ast.cmo parser.cmo scanner.cmo summa.cmo
+OBJS = ast.cmo parser.cmo scanner.cmo semantic_check.cmo summa.cmo
 
 summa : $(OBJS)
 	ocamlc -o summa -g unix.cma $(OBJS)
@@ -22,7 +22,7 @@ parser.ml parser.mli : parser.mly
 .PHONY : clean
 clean :
 	rm -rf summa parser.ml parser.mli scanner.ml \
-	*.cmo *.cmi *.out *.diff *~  a.out.dSYM
+	*.cmo *.cmi *.out *.diff *~  a.out.dSYM test_all.log
 
 new : clean summa
 
@@ -31,8 +31,10 @@ ast.cmo:
 ast.cmx:
 parser.cmo: ast.cmo parser.cmi
 parser.cmx: ast.cmx parser.cmi
+parser.cmi: ast.cmo
 scanner.cmo: parser.cmi
 scanner.cmx: parser.cmx
-parser.cmi: ast.cmo
+semantic_check.cmx: semantic_check.cmx
+semantic_check.cmi: semantic_check.cmo
 summa.cmo: scanner.cmo parser.cmi ast.cmo
 summa.cmx: scanner.cmx parser.cmx ast.cmx

@@ -6,7 +6,7 @@ type uop = Neg | Not
 type rval =
   Int_lit of int
 | Bool_lit of bool
-| Doub_lit of float
+| Double_lit of float
 | Bin_op of rval * bop * rval
 | Un_op of uop * rval
 
@@ -38,7 +38,7 @@ let string_of_unop = function
 let rec string_of_rval = function
   Int_lit(i) -> "int_lit " ^ string_of_int i
 | Bool_lit(b) -> "bool_lit " ^ string_of_bool b
-| Doub_lit(d) -> "doub_lit " ^ string_of_float d
+| Double_lit(d) -> "double_lit " ^ string_of_float d
 | Bin_op(r1, b, r2) -> "bin_op { " ^ string_of_rval r1 ^ " " ^ string_of_bop b ^
     " " ^ string_of_rval r2 ^ " }"
 | Un_op(u, r) -> "un_op { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"

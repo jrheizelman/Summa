@@ -22,7 +22,7 @@ rule token = parse
 | "or" { OR }
 | "and" { AND }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
-| ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLIT(float_of_string lxm)}
+| ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLELIT(float_of_string lxm)}
 | ['0'-'9']+ as lxm { INTLIT(int_of_string lxm)}
 | eof { EOF }
 | _ as char { raise(Failure("illegal character " ^ Char.escaped char))}

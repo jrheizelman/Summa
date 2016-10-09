@@ -1,13 +1,29 @@
 open Ast
 
-(* called to get the type of an rval *)
+(* SAST *)
+
+type valid_type = Int | Bool | Double
+
+type rval_t =
+  Int_lit_t of int
+| Bool_lit_t of bool
+| Double_lit_t of float
+| Bin_op_t of valid_type * rval_t * bop * rval_t
+| Un_op_t of valid_type * uop * rval_t
+
+type program_t = rval_t list
+
+(* SEMANTIC CHECK *)
+
+let string_of_valid_type = function
+	Int -> "int"
+| Bool -> "bool"
+| Double -> "double"
+
 let type_of_rval_t = function
-  Access_lval_t(t, _) -> t
-| Char_lit_t(_) -> Char
-| Int_lit_t(_) -> Int
-| String_lit_t(_) -> String
+  Int_lit_t(_) -> Int
 | Bool_lit_t(_) -> Bool
-| Func_call_t(t, _, _) -> t
+| Double_lit_t(_) -> Double
 | Bin_op_t(t, _, _, _) -> t
 | Un_op_t(t, _, _) -> t
 
@@ -32,11 +48,11 @@ let check_binop (r1:rval_t) (r2:rval_t) (op:bop) =
 			(match op with (And | Or | Equal | Neq) ->
 				Bin_op_t(Bool, r1, op, r2)
 				| _ -> binop_err t1 t2 op)
-		(* Both are chars *)
-		| (Char, Char) ->
-			(match op with (Add | Sub) ->
-				Bin_op_t(Char, r1, op, r2)
-				| _ -> binop_err t1 t2 op)
+		| (Double, Double) ->
+			(match op with
+		  	(Add | Sub | Mult | Div | Mod) -> Bin_op_t(Double, r1, op, r2)
+		  	| (Equal | Neq | Less | Leq | Greater | Geq) -> Bin_op_t(Bool, r1, op, r2)
+		  	| _ -> binop_err t1 t2 op)
 		| _ -> binop_err t1 t2 op
 
 let unop_err (t:valid_type) (op:uop) =
@@ -59,43 +75,17 @@ let check_unop (r:rval_t) (op:uop) =
 			 	  | _ -> unop_err t op)
 		 | _ -> unop_err t op
 
-(* Did not check Array, construct, makeArr, Access*)
-let check_expr (e:expr) env =
-	match e with
-	 Literal(i) -> Literal_t(i)
-	 | Noexpr -> Noexpr_t
-	 | Id(s) -> let (t, st, id) = check_valid_id s env in Id_t(t, st, id)
-	 | Binop(e1, op, e2) ->
-	 	let(ce1, ce2) = (check_expr e1 env, check_expr e2 env) in
+let rec check_rval (r:rval) =
+	match r with
+	 Bin_op(r1, op, r2) ->
+	 	let(ce1, ce2) = (check_rval r1, check_rval r2) in
 			check_binop ce1 ce2 op
-	 | Unop(op, e) ->
-	 	let ce = check_expr e env in
-	 		check_unop ce op
-	 | Call(n, eList) ->
-	 	let checkedList = check_exprList eList env  in
-	 		check_func_call n checkedList env
-	 | String_Lit(s) -> String_Lit_t(s)
-	 | Access(n, tag) -> let (ty, st, id) = check_valid_id n env in handle_access n tag ty
-	 | Char_e(c) -> Char_t(c)
-	 | Assign(l, r) ->
-	 	let checked_r = check_expr r env in
-	 		let checked_l = check_left_value l env in
-	 			check_assign checked_l checked_r
-	 | Bool_Lit(b) -> Bool_Lit_t(b)
-	 | Add_at(s, a) -> let (t, st, id) = check_valid_id s env in match t with
-	 		Node(l) -> let t = Node(a :: l) in
-	 			ignore(symbol_table_override_decl st (SymbTable_Var(st,t,id)) (fst env, id));
-	 			Add_at_t(t,s, a)
-	 		| Edge(l) -> let t = Edge(a :: l) in
-	 			ignore(symbol_table_override_decl st (SymbTable_Var(st,t,id)) (fst env, id));
-	 			Add_at_t(t,s, a)
-	 		| _ -> raise(Failure("Left side of add statement must be Node or Edge type, " ^
-				string_of_valid_type t ^ " given."))
+	 | Un_op(op, r) ->
+	 	let cr = check_rval r in
+	 		check_unop cr op
+	 | Bool_lit(b) -> Bool_lit_t(b)
+	 | Int_lit(i) -> Int_lit_t(i)
+	 | Double_lit(d) -> Double_lit_t(d)
 
-let var(s) = expr check_program (p:program) env =
-	let vs = fst p in
-		let fs = snd p in
-			let checked_vs = check_is_vdecl_list vs env in
-				let checked_fs = check_function_list fs env in
-					if(check_main_exists checked_fs) then (checked_vs, checked_fs)
-					else raise(Failure("Function main not found."))
+let check_program (p:program) =
+	List.map check_rval p

@@ -1,5 +1,7 @@
 19;
 true;
 1.5;
-12 + 9;
-true and 3;
+12.0 + 9.3;
+true and false;
+
+12 > 0 and true == 9 <= 9;

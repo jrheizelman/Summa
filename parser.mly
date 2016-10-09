@@ -21,7 +21,7 @@ let parse_error s = (* Called by the parser function on error *)
 %token EOF SEMI
 %token <int> INTLIT
 %token <bool> BOOLLIT
-%token <float> DOUBLIT
+%token <float> DOUBLELIT
 
 /* state precedence of tokens - need this to avoid shift/reduce conflicts */
 /* goes from least to most important in precedence */
@@ -41,7 +41,7 @@ let parse_error s = (* Called by the parser function on error *)
 rval:
   INTLIT    { Int_lit($1) }
 | BOOLLIT   { Bool_lit($1) }
-| DOUBLIT   { Doub_lit($1) }
+| DOUBLELIT   { Double_lit($1) }
 /* Unary operations */
 | MINUS rval %prec NEG    { Un_op(Neg, $2) }
 /* Binary operations */
