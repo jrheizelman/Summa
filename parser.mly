@@ -64,6 +64,7 @@ lval:
 
 stmt:
   lval ASSIGN rval SEMI   { Assign($1, $3) }
+| rval SEMI   { Rval($1) }
 
 stmt_list:
   /* nothing */   { [] }

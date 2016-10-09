@@ -15,6 +15,7 @@ type lval =
 
 type stmt =
   Assign of lval * rval
+| Rval of rval
 
 type program = stmt list
 
@@ -53,7 +54,8 @@ let string_of_lval = function
   Id(i) -> "id " ^ i
 
 let string_of_stmt = function
-  Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " }"
+  Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " };"
+| Rval(r) -> "rval { " ^ string_of_rval r ^ " };"
 
 let string_of_prog prog =
   String.concat ";\n" (List.map string_of_stmt prog) ^ ";"
