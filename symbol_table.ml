@@ -2,6 +2,7 @@ open Ast
 open Sast
 
 let print_table env =
+  print_endline "Printing table.";
   Hashtbl.iter (fun key t -> print_endline (key ^ ": " ^ string_of_valid_type t)) (fst env)
 
 (* each index in the array refers to a block and holds within it the scope of the parent block *)

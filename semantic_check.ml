@@ -79,12 +79,19 @@ and check_lval (l:lval) env =
 
 (* Checks assignment, adds to table when new, checks type if existing. Returns env *)
 let check_assign (l:lval) (r:rval) env =
+  print_endline ("Checking assign of " ^ id_of_lval l);
   try(
-    let t = check_lval l env in
-      if not (t = type_of_rval_t (check_rval r env)) then
-        raise(Failure("Id " ^ (id_of_lval l) ^ " was already assigned type " ^ string_of_valid_type t))
-      else env)
-  with Failure(_) -> (* id of lval is not present in the table *)
+    let prev_t = check_lval l env in
+      print_table env;
+      let new_t = type_of_rval_t (check_rval r env) in
+        print_endline ("prev t: " ^ string_of_valid_type prev_t ^
+                       ", new t: " ^ string_of_valid_type new_t);
+        print_endline (string_of_bool (is_same_type prev_t new_t));
+        if not (is_same_type prev_t new_t) then
+          print_endline ("Warning: Id " ^ (id_of_lval l) ^
+                         " was already assigned type " ^ string_of_valid_type prev_t);
+        env)
+  with Failure(f) -> (* id of lval is not present in the table *)
     match l with
       Id(id) -> symbol_table_add_id id (type_of_rval_t (check_rval r env)) env
     | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))

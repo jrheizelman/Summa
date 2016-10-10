@@ -25,6 +25,13 @@ type valid_type = Int | Bool | Double | Array of arr_type
 
 and arr_type = valid_type * int
 
+let rec is_same_type t1 t2 = match t1 with
+  Int -> (match t2 with Int -> true | _ -> false)
+| Bool -> (match t2 with Bool -> true | _ -> false)
+| Double -> (match t2 with Double -> true | _ -> false)
+| Array(at1, d1) -> (match t2 with Array(at2, d2) ->
+    if d1 == d2 then is_same_type at1 at2 else false | _ -> false)
+
 let rec id_of_lval = function
   Id(id) -> id
 | Access_arr(l, _) -> id_of_lval l
