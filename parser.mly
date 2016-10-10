@@ -10,8 +10,8 @@ let inc_block_num
 %}
 
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
-%token WHILE IF ELSE RETURN NOELSE
-%token PLUS TIMES MINUS DIVIDE MOD
+%token WHILE IF ELSE RETURN NOELSE FOR
+%token PLUS TIMES MINUS DIVIDE MOD PLUSPLUS MINUSMINUS
 %token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
 %token SEMI ASSIGN EOF
@@ -59,6 +59,10 @@ rval:
 | LPAREN rval RPAREN  { $2 }
 | lval  { Access_lval($1) }
 | valid_type { Decl($1) }
+| PLUSPLUS lval  { Increment(Incr_front, $2) }
+| lval PLUSPLUS  { Increment(Incr_back, $1) }
+| MINUSMINUS lval  { Increment(Decr_front, $2) }
+| lval MINUSMINUS  { Increment(Decr_back, $1) }
 
 opt_rval:
   /* nothing */ { Noexpr }
@@ -78,10 +82,13 @@ lval:
   ID  { Id($1) }
 | lval LBRACK rval RBRACK   { Access_arr($1, $3) }
 
+line_stmt:
+  lval ASSIGN rval   { Assign($1, $3) }
+| rval   { Rval($1) }
+| RETURN opt_rval   { Return($2) }
+
 stmt:
-  lval ASSIGN rval SEMI   { Assign($1, $3) }
-| rval SEMI   { Rval($1) }
-| RETURN opt_rval SEMI   { Return($2) }
+  line_stmt SEMI { $1 }
 | IF LPAREN rval RPAREN block %prec NOELSE {
     If($3, $5, { block_num = scope.contents; stmts = [] }) }
 | IF LPAREN rval RPAREN stmt %prec NOELSE   {
@@ -97,6 +104,13 @@ stmt:
     match $3 with
       Noexpr -> While(Bool_lit(true), $5)
     | _ -> While($3, $5) }
+| WHILE LPAREN opt_rval RPAREN stmt  {
+    match $3 with
+      Noexpr -> While(Bool_lit(true), { block_num = scope.contents; stmts = [$5] } )
+    | _ -> While($3, { block_num = scope.contents; stmts = [$5] } ) }
+| FOR LPAREN line_stmt SEMI rval SEMI line_stmt RPAREN block  { For($3, $5, $7, $9) }
+| FOR LPAREN line_stmt SEMI rval SEMI line_stmt RPAREN stmt  {
+    For($3, $5, $7, { block_num = scope.contents; stmts = [$9] }) }
 
 stmt_list:
   /* nothing */   { [] }

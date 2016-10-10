@@ -6,7 +6,9 @@ hi = int[];
 yup + hi[1];
 
 if(true) { 1; }
-if(i) {} else {
+if(i) 1; else {
     while(8 == 0) { 1.1 == 0.0; }
 }
+
+for(i = 0; true; i = 0) { true; }
 }

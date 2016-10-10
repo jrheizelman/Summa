@@ -22,7 +22,7 @@ parser.ml parser.mli : parser.mly
 .PHONY : clean
 clean :
 	rm -rf summa parser.ml parser.mli scanner.ml \
-	*.cmo *.cmi *.out *.diff *~  a.out.dSYM test_all.log
+	*.cmo *.cmi *.out *.diff *~  a.out.dSYM test_all.log parser.conflicts
 
 new : clean summa
 

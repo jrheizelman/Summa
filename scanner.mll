@@ -13,6 +13,8 @@ rule token = parse
 | '}' { RBRACE }
 | '[' { LBRACK }
 | ']' { RBRACK }
+| "++" { PLUSPLUS }
+| "--" { MINUSMINUS }
 | '+' { PLUS }
 | '*' { TIMES }
 | '-' { MINUS }
@@ -33,6 +35,7 @@ rule token = parse
 | "if" { IF }
 | "else" { ELSE }
 | "while" { WHILE }
+| "for" { FOR }
 | "return" { RETURN }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
 | ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLELIT(float_of_string lxm) }

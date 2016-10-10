@@ -66,6 +66,10 @@ let rec check_rval (r:rval) env =
   | Access_lval(l) -> Access_lval_t(check_lval l env, l)
   | Noexpr -> Noexpr_t(Void)
   | Decl(t) -> Decl_t(t)
+  | Increment(i, l) ->
+      let t = check_lval l env in
+      if equals t Int then Increment_t(i, l)
+      else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))
 
 (* Checks lval access for any errors, returns validtype *)
 and check_lval (l:lval) env =
@@ -111,6 +115,13 @@ let rec check_stmt env (s:stmt) =
         if equals r_type Bool then (
           ignore (check_block b env); env)
         else raise(Failure("Value inside while statement condition must be bool, received: " ^
+                           string_of_valid_type r_type ^ "."))
+  | For(s1, r, s2, b) ->
+      let r_type = type_of_rval_t (check_rval r env) in
+        if equals r_type Bool then let env_for = check_stmt env s1 in
+          let env_for = check_stmt env_for s2 in
+            ignore (check_block b env_for); env
+        else raise(Failure("Value inside for statement condition must be bool, received: " ^
                            string_of_valid_type r_type ^ "."))
 
 and check_block (b:block) env =

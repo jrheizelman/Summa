@@ -1,7 +1,9 @@
 type bop = Equal | Neq | Leq | Geq | Greater | Less | And | Or
 | Add | Sub | Mult | Div | Mod
 
-type uop = Neg | Not
+type increment = Incr_front | Incr_back | Decr_front | Decr_back
+
+type uop = Neg | Not | Increment of increment
 
 type valid_type = Int | Bool | Double | Array of arr_type | Void
 
@@ -20,6 +22,7 @@ and rval =
 | Access_lval of lval
 | Noexpr
 | Decl of valid_type
+| Increment of increment * lval
 
 type stmt =
   Assign of lval * rval
@@ -27,6 +30,7 @@ type stmt =
 | Return of rval
 | If of rval * block * block
 | While of rval * block
+| For of stmt * rval * stmt * block
 
 and block = {
   stmts : stmt list;
@@ -73,9 +77,16 @@ let rec string_of_valid_type = function
 | Array(t,d) -> "array, t " ^ string_of_valid_type t ^ ", d " ^ string_of_int d
 | Void -> "void"
 
+let string_of_increment = function
+  Incr_front -> "incr_front"
+| Incr_back -> "incr_back"
+| Decr_back -> "decr_back"
+| Decr_front -> "decr_front"
+
 let string_of_unop = function
   Neg -> "-"
 | Not -> "!"
+| Increment(i) -> "increment: " ^ string_of_increment i
 
 let rec string_of_lval = function
   Id(i) -> "id " ^ i
@@ -91,6 +102,7 @@ and string_of_rval = function
 | Access_lval(l) -> "access " ^ string_of_lval l
 | Noexpr -> "noexpr"
 | Decl(t) -> "decl " ^ string_of_valid_type t
+| Increment(i, l) -> string_of_increment i ^ " " ^ string_of_lval l
 
 let rec string_of_stmt = function
   Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " };"
@@ -99,6 +111,8 @@ let rec string_of_stmt = function
 | If(r, b1, b2) -> "if (" ^ string_of_rval r ^ ") then " ^ string_of_block b1 ^
                    " else " ^ string_of_block b2
 | While(r, b) -> "while (" ^ string_of_rval r ^ ") " ^ string_of_block b
+| For(s1, r, s2, b) -> "for (" ^ string_of_stmt s1 ^ "; " ^ string_of_rval r ^
+                       "; " ^ string_of_stmt s2 ^ ")" ^ string_of_block b
 
 and string_of_block (b:block) = "block " ^ string_of_int b.block_num ^ ": {\n" ^
     String.concat "" (List.map string_of_stmt b.stmts) ^
