@@ -5,8 +5,9 @@ type uop = Neg | Not
 
 type lval =
   Id of string
+| Access_arr of lval * rval
 
-type rval =
+and rval =
   Int_lit of int
 | Bool_lit of bool
 | Double_lit of float
@@ -19,6 +20,14 @@ type stmt =
 | Rval of rval
 
 type program = stmt list
+
+type valid_type = Int | Bool | Double | Array of arr_type
+
+and arr_type = valid_type * int
+
+let rec id_of_lval = function
+  Id(id) -> id
+| Access_arr(l, _) -> id_of_lval l
 
 (*************************
 **** PRINT AST **********
@@ -39,14 +48,21 @@ let string_of_bop = function
 | And -> "and"
 | Or -> "or"
 
+let rec string_of_valid_type = function
+  Int -> "int"
+| Bool -> "bool"
+| Double -> "double"
+| Array(t,d) -> "array, t " ^ string_of_valid_type t ^ ", d " ^ string_of_int d
+
 let string_of_unop = function
   Neg -> "-"
 | Not -> "!"
 
-let string_of_lval = function
+let rec string_of_lval = function
   Id(i) -> "id " ^ i
+| Access_arr(l, r) -> "arr_access " ^ string_of_lval l ^ "[" ^ string_of_rval r ^ "]"
 
-let rec string_of_rval = function
+and string_of_rval = function
   Int_lit(i) -> "int_lit " ^ string_of_int i
 | Bool_lit(b) -> "bool_lit " ^ string_of_bool b
 | Double_lit(d) -> "double_lit " ^ string_of_float d

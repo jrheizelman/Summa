@@ -1,4 +1,4 @@
-OBJS = ast.cmo parser.cmo scanner.cmo symbol_table.cmo semantic_check.cmo summa.cmo
+OBJS = ast.cmo parser.cmo scanner.cmo sast.cmo symbol_table.cmo semantic_check.cmo summa.cmo
 
 summa : $(OBJS)
 	ocamlc -o summa -g unix.cma $(OBJS)

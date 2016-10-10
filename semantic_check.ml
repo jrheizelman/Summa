@@ -2,19 +2,6 @@ open Ast
 open Sast
 open Symbol_table
 
-let string_of_valid_type = function
-  Int -> "int"
-| Bool -> "bool"
-| Double -> "double"
-
-let type_of_rval_t = function
-  Int_lit_t(_) -> Int
-| Bool_lit_t(_) -> Bool
-| Double_lit_t(_) -> Double
-| Bin_op_t(t, _, _, _) -> t
-| Un_op_t(t, _, _) -> t
-| Access_lval_t(t, _) -> t
-
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
     raise(Failure("Operator " ^ (string_of_bop op) ^

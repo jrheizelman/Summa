@@ -14,7 +14,7 @@ let parse_error s = (* Called by the parser function on error *)
 
 %}
 
-%token LPAREN RPAREN
+%token LPAREN RPAREN LBRACK RBRACK
 %token PLUS TIMES MINUS DIVIDE MOD
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
 %token SEMI ASSIGN EOF
@@ -62,6 +62,7 @@ rval:
 
 lval:
   ID  { Id($1) }
+| lval LBRACK rval RBRACK   { Access_arr($1, $3) }
 
 stmt:
   lval ASSIGN rval SEMI   { Assign($1, $3) }

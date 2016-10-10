@@ -9,6 +9,10 @@ rule token = parse
 | ";" { SEMI }
 | '(' { LPAREN }
 | ')' { RPAREN }
+(*| '{' { LBRACE }
+| '}' { RBRACE }*)
+| '[' { LBRACK }
+| ']' { RBRACK }
 | '+' { PLUS }
 | '*' { TIMES }
 | '-' { MINUS }
