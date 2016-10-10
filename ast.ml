@@ -5,9 +5,8 @@ type increment = Incr_front | Incr_back | Decr_front | Decr_back
 
 type uop = Neg | Not | Increment of increment
 
-type valid_type = Int | Bool | Double | Array of arr_type | Void
-
-and arr_type = valid_type * int
+type valid_type = Int | Bool | Double | Array of valid_type * int | Void
+| Function of valid_type * string * (valid_type * string) list
 
 type lval =
   Id of string

@@ -37,6 +37,7 @@ rule token = parse
 | "while" { WHILE }
 | "for" { FOR }
 | "return" { RETURN }
+| "def" { DEF }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
 | ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLELIT(float_of_string lxm) }
 | ['0'-'9']+ as lxm { INTLIT(int_of_string lxm)}
