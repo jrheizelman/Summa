@@ -16,6 +16,7 @@ let parse_error s = (* Called by the parser function on error *)
 
 %token LPAREN RPAREN LBRACK RBRACK
 %token PLUS TIMES MINUS DIVIDE MOD
+%token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
 %token SEMI ASSIGN EOF
 %token <int> INTLIT
@@ -59,6 +60,21 @@ rval:
 | rval AND rval   { Bin_op($1, And, $3) }
 | LPAREN rval RPAREN  { $2 }
 | lval  { Access_lval($1) }
+| valid_type { Decl($1) }
+
+opt_rval:
+  /* nothing */ { Noexpr }
+| rval  { $1 }
+
+valid_type:
+  INT   { Int }
+| DOUBLE  { Double }
+| BOOL  { Bool }
+| VOID { Void }
+| valid_type LBRACK opt_rval RBRACK   {
+    match $1 with
+      Array(t, d) -> Array(t, d+1)
+    | _ ->  Array($1, 1) }
 
 lval:
   ID  { Id($1) }

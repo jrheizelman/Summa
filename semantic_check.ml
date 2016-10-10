@@ -51,7 +51,7 @@ let check_unop (r:rval_t) (op:uop) =
           | _ -> unop_err t op)
     | _ -> unop_err t op
 
-(* Checks rval access for any errors, returns validtype *)
+(* Checks rval access for any errors, returns rval_t *)
 let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
@@ -64,6 +64,8 @@ let rec check_rval (r:rval) env =
   | Int_lit(i) -> Int_lit_t(i)
   | Double_lit(d) -> Double_lit_t(d)
   | Access_lval(l) -> Access_lval_t(check_lval l env, l)
+  | Noexpr -> Noexpr_t(Void)
+  | Decl(t) -> Decl_t(t)
 
 (* Checks lval access for any errors, returns validtype *)
 and check_lval (l:lval) env =

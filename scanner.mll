@@ -26,6 +26,10 @@ rule token = parse
 | "or" { OR }
 | "and" { AND }
 | "=" { ASSIGN }
+| "bool" { BOOL }
+| "int" { INT }
+| "double" { DOUBLE }
+| "void" { VOID }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
 | ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLELIT(float_of_string lxm) }
 | ['0'-'9']+ as lxm { INTLIT(int_of_string lxm)}

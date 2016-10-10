@@ -7,6 +7,8 @@ type rval_t =
 | Bin_op_t of valid_type * rval_t * bop * rval_t
 | Un_op_t of valid_type * uop * rval_t
 | Access_lval_t of valid_type * lval
+| Noexpr_t of valid_type
+| Decl_t of valid_type
 
 let type_of_rval_t = function
   Int_lit_t(_) -> Int
@@ -15,3 +17,5 @@ let type_of_rval_t = function
 | Bin_op_t(t, _, _, _) -> t
 | Un_op_t(t, _, _) -> t
 | Access_lval_t(t, _) -> t
+| Noexpr_t(t) -> t
+| Decl_t(t) -> t

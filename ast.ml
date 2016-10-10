@@ -3,6 +3,10 @@ type bop = Equal | Neq | Leq | Geq | Greater | Less | And | Or
 
 type uop = Neg | Not
 
+type valid_type = Int | Bool | Double | Array of arr_type | Void
+
+and arr_type = valid_type * int
+
 type lval =
   Id of string
 | Access_arr of lval * rval
@@ -14,6 +18,8 @@ and rval =
 | Bin_op of rval * bop * rval
 | Un_op of uop * rval
 | Access_lval of lval
+| Noexpr
+| Decl of valid_type
 
 type stmt =
   Assign of lval * rval
@@ -21,16 +27,13 @@ type stmt =
 
 type program = stmt list
 
-type valid_type = Int | Bool | Double | Array of arr_type
-
-and arr_type = valid_type * int
-
 let rec is_same_type t1 t2 = match t1 with
   Int -> (match t2 with Int -> true | _ -> false)
 | Bool -> (match t2 with Bool -> true | _ -> false)
 | Double -> (match t2 with Double -> true | _ -> false)
 | Array(at1, d1) -> (match t2 with Array(at2, d2) ->
     if d1 == d2 then is_same_type at1 at2 else false | _ -> false)
+| Void -> (match t2 with Void -> true | _ -> false)
 
 let rec id_of_lval = function
   Id(id) -> id
@@ -60,6 +63,7 @@ let rec string_of_valid_type = function
 | Bool -> "bool"
 | Double -> "double"
 | Array(t,d) -> "array, t " ^ string_of_valid_type t ^ ", d " ^ string_of_int d
+| Void -> "void"
 
 let string_of_unop = function
   Neg -> "-"
@@ -77,6 +81,8 @@ and string_of_rval = function
     " " ^ string_of_rval r2 ^ " }"
 | Un_op(u, r) -> "un_op { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"
 | Access_lval(l) -> "access " ^ string_of_lval l
+| Noexpr -> "noexpr"
+| Decl(t) -> "decl " ^ string_of_valid_type t
 
 let string_of_stmt = function
   Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " };"
