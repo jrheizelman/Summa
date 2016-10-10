@@ -2,3 +2,6 @@ i = 9;
 i = 10;
 yup = 10;
 i = true;
+
+hi = int[];
+i + hi[1];

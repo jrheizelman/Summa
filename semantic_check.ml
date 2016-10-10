@@ -81,14 +81,9 @@ and check_lval (l:lval) env =
 
 (* Checks assignment, adds to table when new, checks type if existing. Returns env *)
 let check_assign (l:lval) (r:rval) env =
-  print_endline ("Checking assign of " ^ id_of_lval l);
   try(
     let prev_t = check_lval l env in
-      print_table env;
       let new_t = type_of_rval_t (check_rval r env) in
-        print_endline ("prev t: " ^ string_of_valid_type prev_t ^
-                       ", new t: " ^ string_of_valid_type new_t);
-        print_endline (string_of_bool (is_same_type prev_t new_t));
         if not (is_same_type prev_t new_t) then
           print_endline ("Warning: Id " ^ (id_of_lval l) ^
                          " was already assigned type " ^ string_of_valid_type prev_t);
