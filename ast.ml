@@ -24,8 +24,16 @@ and rval =
 type stmt =
   Assign of lval * rval
 | Rval of rval
+| Return of rval
+| If of rval * block * block
+| While of rval * block
 
-type program = stmt list
+and block = {
+  stmts : stmt list;
+  block_num : int;
+}
+
+type program = block
 
 let rec equals t1 t2 = match t1 with
   Int -> (match t2 with Int -> true | _ -> false)
@@ -84,9 +92,16 @@ and string_of_rval = function
 | Noexpr -> "noexpr"
 | Decl(t) -> "decl " ^ string_of_valid_type t
 
-let string_of_stmt = function
+let rec string_of_stmt = function
   Assign(l, r) -> "assign { " ^ string_of_lval l ^ " = " ^ string_of_rval r ^ " };"
 | Rval(r) -> "rval { " ^ string_of_rval r ^ " };"
+| Return(r) -> "return " ^ string_of_rval r ^ ";"
+| If(r, b1, b2) -> "if (" ^ string_of_rval r ^ ") then " ^ string_of_block b1 ^
+                   " else " ^ string_of_block b2
+
+and string_of_block (b:block) = "block " ^ string_of_int b.block_num ^ ": {\n" ^
+    String.concat "" (List.map string_of_stmt b.stmts) ^
+    "}\n"
 
 let string_of_prog prog =
-  String.concat ";\n" (List.map string_of_stmt prog) ^ ";"
+  string_of_block prog

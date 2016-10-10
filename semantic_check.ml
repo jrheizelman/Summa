@@ -95,11 +95,22 @@ let check_assign (l:lval) (r:rval) env =
     | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
 
 (* Checks statements for semantic errors, returns env *)
-let check_stmt env (s:stmt) =
+let rec check_stmt env (s:stmt) =
   match s with
     Assign(l, r) -> check_assign l r env
   | Rval(r) -> ignore (check_rval r env); env
+  | Return(r) -> ignore (check_rval r env); env
+  | If(r, b1, b2) ->
+      let r_type = type_of_rval_t (check_rval r env) in
+        if equals r_type Bool then
+          ignore (check_block b1 env); ignore (check_block b2 env); env
+        (*else raise(Failure("Value inside if statement condition must be bool, received: " ^
+                           string_of_valid_type r_type ^ "."))*)
+
+and check_block (b:block) env =
+  let (table, _) = env in
+    List.fold_left check_stmt (table, b.block_num) b.stmts
 
 (* Checks program for semantic errors, returns env *)
 let check_program (p:program) =
-  List.fold_left check_stmt ((Hashtbl.create 1000), 0) p
+  check_block p ((Hashtbl.create 1000), 0)

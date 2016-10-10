@@ -7,14 +7,10 @@ let inc_block_num
     let x = scope.contents in
     scope := x + 1; x (*set the contents of scope to x+1, increments it by 1*)
 
-
-let parse_error s = (* Called by the parser function on error *)
-  print_endline s;
-  flush stdout
-
 %}
 
-%token LPAREN RPAREN LBRACK RBRACK
+%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
+%token WHILE IF ELSE CONTINUE RETURN
 %token PLUS TIMES MINUS DIVIDE MOD
 %token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
@@ -83,10 +79,17 @@ lval:
 stmt:
   lval ASSIGN rval SEMI   { Assign($1, $3) }
 | rval SEMI   { Rval($1) }
+| RETURN rval SEMI   { Return($2) }
+| IF LPAREN rval RPAREN block  {
+    If($3, $5, { block_num = scope.contents; stmts = [] }) }
+| IF LPAREN rval RPAREN block ELSE block  { If($3, $5, $7) }
 
 stmt_list:
   /* nothing */   { [] }
 | stmt_list stmt { $2 :: $1 }
 
+block:
+  LBRACE stmt_list RBRACE   { { stmts = List.rev $2; block_num = inc_block_num() } }
+
 program:
-  stmt_list EOF   { List.rev $1 }
+  block EOF   { $1 }
