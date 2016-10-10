@@ -119,5 +119,13 @@ stmt_list:
 block:
   LBRACE stmt_list RBRACE   { { stmts = List.rev $2; block_num = inc_block_num() } }
 
+params_opt:
+  /* nothing */   { [] }
+| params_opt ID   { (Undef, $2) :: $1 }
+| params_opt valid_type ID { ($2, $3) :: $1 }
+
+func_def:
+  DEF ID LPAREN params_opt RPAREN block   { { id = $2; ret_type = Undef; params = List.rev $4; body_block = $6 }}
+
 program:
-  block EOF   { $1 }
+  func_def EOF   { $1 }

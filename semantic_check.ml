@@ -128,6 +128,19 @@ and check_block (b:block) env =
   let (table, _) = env in
     List.fold_left check_stmt (table, b.block_num) b.stmts
 
+let check_func_def (f:func_def) env =
+  let f_type = Function(f.ret_type, List.map fst f.params) in
+    let p_type = List.map fst f.params in
+      try(
+        let prev_t = symbol_table_get_id f.id env in
+          if not (equals prev_t f_type) then
+            (print_endline ("Warning: Id " ^ f.id ^
+                           " was already assigned type " ^ string_of_valid_type prev_t);
+            symbol_table_replace_id f.id (Function(f_type, p_type)) env)
+          else env)
+      with Failure(f) ->
+        env
+
 (* Checks program for semantic errors, returns env *)
 let check_program (p:program) =
-  check_block p ((Hashtbl.create 1000), 0)
+  check_func_def p ((Hashtbl.create 1000), 0)
