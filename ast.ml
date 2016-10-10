@@ -27,12 +27,12 @@ type stmt =
 
 type program = stmt list
 
-let rec is_same_type t1 t2 = match t1 with
+let rec equals t1 t2 = match t1 with
   Int -> (match t2 with Int -> true | _ -> false)
 | Bool -> (match t2 with Bool -> true | _ -> false)
 | Double -> (match t2 with Double -> true | _ -> false)
 | Array(at1, d1) -> (match t2 with Array(at2, d2) ->
-    if d1 == d2 then is_same_type at1 at2 else false | _ -> false)
+    if d1 == d2 then equals at1 at2 else false | _ -> false)
 | Void -> (match t2 with Void -> true | _ -> false)
 
 let rec id_of_lval = function

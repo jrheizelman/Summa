@@ -84,10 +84,11 @@ let check_assign (l:lval) (r:rval) env =
   try(
     let prev_t = check_lval l env in
       let new_t = type_of_rval_t (check_rval r env) in
-        if not (is_same_type prev_t new_t) then
-          print_endline ("Warning: Id " ^ (id_of_lval l) ^
+        if not (equals prev_t new_t) then
+          (print_endline ("Warning: Id " ^ (id_of_lval l) ^
                          " was already assigned type " ^ string_of_valid_type prev_t);
-        env)
+          symbol_table_replace_id (id_of_lval l) new_t env)
+        else env)
   with Failure(f) -> (* id of lval is not present in the table *)
     match l with
       Id(id) -> symbol_table_add_id id (type_of_rval_t (check_rval r env)) env

@@ -1,6 +1,8 @@
 open Ast
 open Sast
 
+(* Handles hash table of symbols. Env is type ((string, valid_type) Hashtable, int) *)
+
 let print_table env =
   print_endline "Printing table.";
   Hashtbl.iter (fun key t -> print_endline (key ^ ": " ^ string_of_valid_type t)) (fst env)
@@ -24,4 +26,10 @@ let symbol_table_add_id (id:string) (t:valid_type) env =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
       Hashtbl.add table table_key t;
+      (table, scope)
+
+let symbol_table_replace_id (id:string) (t:valid_type) env =
+  let (table, scope) = env in
+    let table_key = id ^ "_" ^ string_of_int scope in
+      Hashtbl.replace table table_key t;
       (table, scope)
