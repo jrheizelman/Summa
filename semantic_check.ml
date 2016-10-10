@@ -44,28 +44,39 @@ let check_unop (r:rval_t) (op:uop) =
           Neg -> Un_op_t(Int, op, r)
         | _ -> unop_err t op)
     (* Expression is a bool *)
-     | Bool ->
+    | Bool ->
       (match op with
           Not -> Un_op_t(Bool, op, r)
           | _ -> unop_err t op)
-     | _ -> unop_err t op
+    | _ -> unop_err t op
 
 let rec check_rval (r:rval) env =
   match r with
-   Bin_op(r1, op, r2) ->
-    let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
-      check_binop ce1 ce2 op
-   | Un_op(op, r) ->
-    let cr = check_rval r env in
-      check_unop cr op
-   | Bool_lit(b) -> Bool_lit_t(b)
-   | Int_lit(i) -> Int_lit_t(i)
-   | Double_lit(d) -> Double_lit_t(d)
-   | Access_lval(l) -> symbol_table_access_lval l env
+    Bin_op(r1, op, r2) ->
+      let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
+        check_binop ce1 ce2 op
+  | Un_op(op, r) ->
+      let cr = check_rval r env in
+        check_unop cr op
+  | Bool_lit(b) -> Bool_lit_t(b)
+  | Int_lit(i) -> Int_lit_t(i)
+  | Double_lit(d) -> Double_lit_t(d)
+  | Access_lval(l) -> Access_lval_t(check_lval l env, l)
+
+and check_lval (l:lval) env =
+  match l with
+    Id(id) -> symbol_table_get_id (id_of_lval l) env
+  | Access_arr(l, r) ->
+      if not (type_of_rval_t (check_rval r env) = Int) then
+        raise(Failure("Value inside array brackets must be integer."))
+      else let l_type = type_of_rval_t (check_rval (Access_lval(l)) env) in
+        match l_type with
+          Array(t, d) -> if d == 1 then t else Array(t, d-1)
+        | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))
 
 let check_stmt env (s:stmt) =
   match s with
-    Assign(l, r) -> symbol_table_add_lval l (type_of_rval_t (check_rval r env)) env
+    Assign(l, r) -> symbol_table_add_id (id_of_lval l) (type_of_rval_t (check_rval r env)) env
   | Rval(r) -> ignore (check_rval r env); env
 
 let check_program (p:program) =
