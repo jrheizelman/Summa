@@ -10,7 +10,7 @@ let inc_block_num
 %}
 
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
-%token WHILE IF ELSE RETURN
+%token WHILE IF ELSE RETURN NOELSE
 %token PLUS TIMES MINUS DIVIDE MOD
 %token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
@@ -22,6 +22,8 @@ let inc_block_num
 
 /* state precedence of tokens - need this to avoid shift/reduce conflicts */
 /* goes from least to most important in precedence */
+%nonassoc NOELSE
+%nonassoc ELSE
 %left AND OR
 %left EQ NEQ
 %left LEQ GEQ LTHAN GTHAN
@@ -80,9 +82,17 @@ stmt:
   lval ASSIGN rval SEMI   { Assign($1, $3) }
 | rval SEMI   { Rval($1) }
 | RETURN opt_rval SEMI   { Return($2) }
-| IF LPAREN rval RPAREN block  {
+| IF LPAREN rval RPAREN block %prec NOELSE {
     If($3, $5, { block_num = scope.contents; stmts = [] }) }
+| IF LPAREN rval RPAREN stmt %prec NOELSE   {
+    If($3, { block_num = scope.contents; stmts = [$5] }, { block_num = scope.contents; stmts = [] }) }
 | IF LPAREN rval RPAREN block ELSE block  { If($3, $5, $7) }
+| IF LPAREN rval RPAREN stmt ELSE block   {
+    If($3, { block_num = scope.contents; stmts = [$5] }, $7) }
+| IF LPAREN rval RPAREN block ELSE stmt   {
+    If($3, $5, { block_num = scope.contents; stmts = [$7] }) }
+| IF LPAREN rval RPAREN stmt ELSE stmt   {
+    If($3, { block_num = scope.contents; stmts = [$5] }, { block_num = scope.contents; stmts = [$7] }) }
 | WHILE LPAREN opt_rval RPAREN block  {
     match $3 with
       Noexpr -> While(Bool_lit(true), $5)
