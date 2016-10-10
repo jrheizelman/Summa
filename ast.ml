@@ -98,6 +98,7 @@ let rec string_of_stmt = function
 | Return(r) -> "return " ^ string_of_rval r ^ ";"
 | If(r, b1, b2) -> "if (" ^ string_of_rval r ^ ") then " ^ string_of_block b1 ^
                    " else " ^ string_of_block b2
+| While(r, b) -> "while (" ^ string_of_rval r ^ ") " ^ string_of_block b
 
 and string_of_block (b:block) = "block " ^ string_of_int b.block_num ^ ": {\n" ^
     String.concat "" (List.map string_of_stmt b.stmts) ^

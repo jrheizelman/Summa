@@ -32,10 +32,8 @@ rule token = parse
 | "void" { VOID }
 | "if" { IF }
 | "else" { ELSE }
-| "for" { FOR }
 | "while" { WHILE }
 | "return" { RETURN }
-| "continue" { CONTINUE }
 | ("true" | "false") as lxm	{ BOOLLIT(bool_of_string lxm) }
 | ['0'-'9']+'.'['0'-'9']+ as lxm { DOUBLELIT(float_of_string lxm) }
 | ['0'-'9']+ as lxm { INTLIT(int_of_string lxm)}

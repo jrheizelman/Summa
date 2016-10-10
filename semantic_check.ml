@@ -102,10 +102,16 @@ let rec check_stmt env (s:stmt) =
   | Return(r) -> ignore (check_rval r env); env
   | If(r, b1, b2) ->
       let r_type = type_of_rval_t (check_rval r env) in
-        if equals r_type Bool then
-          ignore (check_block b1 env); ignore (check_block b2 env); env
-        (*else raise(Failure("Value inside if statement condition must be bool, received: " ^
-                           string_of_valid_type r_type ^ "."))*)
+        if equals r_type Bool then (
+          ignore (check_block b1 env); ignore (check_block b2 env); env)
+        else raise(Failure("Value inside if statement condition must be bool, received: " ^
+                           string_of_valid_type r_type ^ "."))
+  | While(r, b) ->
+      let r_type = type_of_rval_t (check_rval r env) in
+        if equals r_type Bool then (
+          ignore (check_block b env); env)
+        else raise(Failure("Value inside while statement condition must be bool, received: " ^
+                           string_of_valid_type r_type ^ "."))
 
 and check_block (b:block) env =
   let (table, _) = env in

@@ -10,7 +10,7 @@ let inc_block_num
 %}
 
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
-%token WHILE IF ELSE CONTINUE RETURN
+%token WHILE IF ELSE RETURN
 %token PLUS TIMES MINUS DIVIDE MOD
 %token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
@@ -79,10 +79,14 @@ lval:
 stmt:
   lval ASSIGN rval SEMI   { Assign($1, $3) }
 | rval SEMI   { Rval($1) }
-| RETURN rval SEMI   { Return($2) }
+| RETURN opt_rval SEMI   { Return($2) }
 | IF LPAREN rval RPAREN block  {
     If($3, $5, { block_num = scope.contents; stmts = [] }) }
 | IF LPAREN rval RPAREN block ELSE block  { If($3, $5, $7) }
+| WHILE LPAREN opt_rval RPAREN block  {
+    match $3 with
+      Noexpr -> While(Bool_lit(true), $5)
+    | _ -> While($3, $5) }
 
 stmt_list:
   /* nothing */   { [] }
