@@ -22,12 +22,5 @@ let rec symbol_table_get_id (id:string) env =
 let symbol_table_add_id (id:string) (t:valid_type) env =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
-      try(
-        let prev_t = symbol_table_get_id id env in
-          if not (prev_t = t) then
-            print_endline (id ^ " WARNING: Overriding declaration with different type"));
-          Hashtbl.replace table table_key t;
-          (table, scope)
-      with Failure(_) ->
-        Hashtbl.add table table_key t;
-        (table, scope)
+      Hashtbl.add table table_key t;
+      (table, scope)

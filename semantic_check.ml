@@ -35,6 +35,7 @@ let unop_err (t:valid_type) (op:uop) =
     " not compatible with expression of type " ^
     (string_of_valid_type t) ^ "."))
 
+(* Checks unary operation for proper types *)
 let check_unop (r:rval_t) (op:uop) =
   let t = type_of_rval_t r in
     match t with
@@ -50,6 +51,7 @@ let check_unop (r:rval_t) (op:uop) =
           | _ -> unop_err t op)
     | _ -> unop_err t op
 
+(* Checks rval access for any errors, returns validtype *)
 let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
@@ -63,21 +65,36 @@ let rec check_rval (r:rval) env =
   | Double_lit(d) -> Double_lit_t(d)
   | Access_lval(l) -> Access_lval_t(check_lval l env, l)
 
+(* Checks lval access for any errors, returns validtype *)
 and check_lval (l:lval) env =
   match l with
     Id(id) -> symbol_table_get_id (id_of_lval l) env
   | Access_arr(l, r) ->
       if not (type_of_rval_t (check_rval r env) = Int) then
         raise(Failure("Value inside array brackets must be integer."))
-      else let l_type = type_of_rval_t (check_rval (Access_lval(l)) env) in
+      else let l_type = check_lval l env in
         match l_type with
           Array(t, d) -> if d == 1 then t else Array(t, d-1)
         | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))
 
+(* Checks assignment, adds to table when new, checks type if existing. Returns env *)
+let check_assign (l:lval) (r:rval) env =
+  try(
+    let t = check_lval l env in
+      if not (t = type_of_rval_t (check_rval r env)) then
+        raise(Failure("Id " ^ (id_of_lval l) ^ " was already assigned type " ^ string_of_valid_type t))
+      else env)
+  with Failure(_) -> (* id of lval is not present in the table *)
+    match l with
+      Id(id) -> symbol_table_add_id id (type_of_rval_t (check_rval r env)) env
+    | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
+
+(* Checks statements for semantic errors, returns env *)
 let check_stmt env (s:stmt) =
   match s with
-    Assign(l, r) -> symbol_table_add_id (id_of_lval l) (type_of_rval_t (check_rval r env)) env
+    Assign(l, r) -> check_assign l r env
   | Rval(r) -> ignore (check_rval r env); env
 
+(* Checks program for semantic errors, returns env *)
 let check_program (p:program) =
   List.fold_left check_stmt ((Hashtbl.create 1000), 0) p
