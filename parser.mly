@@ -14,7 +14,7 @@ let inc_block_num
 %token PLUS TIMES MINUS DIVIDE MOD PLUSPLUS MINUSMINUS
 %token BOOL INT DOUBLE VOID
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
-%token SEMI ASSIGN EOF
+%token SEMI ASSIGN EOF COMMA
 %token <int> INTLIT
 %token <bool> BOOLLIT
 %token <float> DOUBLELIT
@@ -119,13 +119,20 @@ stmt_list:
 block:
   LBRACE stmt_list RBRACE   { { stmts = List.rev $2; block_num = inc_block_num() } }
 
+param:
+  ID  { (Undef, $1) }
+| valid_type ID { ($1, $2) }
+
 params_opt:
   /* nothing */   { [] }
-| params_opt ID   { (Undef, $2) :: $1 }
-| params_opt valid_type ID { ($2, $3) :: $1 }
+| param   { [$1] }
+| params_opt COMMA param  { $3 :: $1 }
 
 func_def:
-  DEF ID LPAREN params_opt RPAREN block   { { id = $2; ret_type = Undef; params = List.rev $4; body_block = $6 }}
+  DEF ID LPAREN params_opt RPAREN block   {
+    { id = $2; ret_type = Undef; params = List.rev $4; body_block = $6 } }
+| valid_type ID LPAREN params_opt RPAREN block   {
+    { id = $2; ret_type = $1; params = List.rev $4; body_block = $6 } }
 
 program:
   func_def EOF   { $1 }
