@@ -144,6 +144,7 @@ let check_func_def (f:func_def) env =
         if not (equals prev_t f_type) then
           (print_endline ("Warning: Id " ^ f.id ^
                          " was already assigned type " ^ string_of_valid_type prev_t);
+          ignore (symbol_table_replace_id env f.id f_type);
           check_func_helper f f_type env)
         else env)
     with Failure(fail) ->
