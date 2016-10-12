@@ -66,6 +66,7 @@ let rec equals t1 t2 = match t1 with
           comp_lists p_list1 p_list2
     | _ -> false)
 | Undef -> (match t2 with Undef -> true | _ -> false)
+| Ref_to_type(s1) -> (match t2 with Ref_to_type(s2) -> s1 = s2 | _ -> false)
 
 let rec id_of_lval = function
   Id(id) -> id
@@ -99,6 +100,7 @@ let rec string_of_valid_type = function
 | Function(rt, p_list) -> string_of_valid_type rt ^ "-func (" ^
                           String.concat ", " (List.map string_of_valid_type p_list) ^ ")"
 | Undef -> "undefined"
+| Ref_to_type(s) -> "ref_to_type of id: " ^ s
 
 let string_of_increment = function
   Incr_front -> "incr_front"
