@@ -55,6 +55,7 @@ let check_unop (r:rval_t) (op:uop) =
 let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
+      print_table env;
       let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
         check_binop ce1 ce2 op
   | Un_op(op, r) ->
@@ -91,11 +92,11 @@ let check_assign (l:lval) (r:rval) env =
         if not (equals prev_t new_t) then
           (print_endline ("Warning: Id " ^ (id_of_lval l) ^
                          " was already assigned type " ^ string_of_valid_type prev_t);
-          symbol_table_replace_id (id_of_lval l) new_t env)
+          symbol_table_replace_id env (id_of_lval l) new_t)
         else env)
   with Failure(f) -> (* id of lval is not present in the table *)
     match l with
-      Id(id) -> symbol_table_add_id id (type_of_rval_t (check_rval r env)) env
+      Id(id) -> symbol_table_add_id env id (type_of_rval_t (check_rval r env))
     | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
 
 (* Checks statements for semantic errors, returns env *)
@@ -128,18 +129,24 @@ and check_block (b:block) env =
   let (table, _) = env in
     List.fold_left check_stmt (table, b.block_num) b.stmts
 
+(* Adds the function def with type to table, then checks block *)
+let check_func_helper (f:func_def) (f_type:valid_type) env =
+  let env = symbol_table_add_id env f.id f_type in
+    let add_params = (fun env (t, id) -> symbol_table_add_id env id t) in
+      List.fold_left add_params env f.params
+
+
 let check_func_def (f:func_def) env =
-  let f_type = Function(f.ret_type, List.map fst f.params) in
-    let p_type = List.map fst f.params in
-      try(
-        let prev_t = symbol_table_get_id f.id env in
-          if not (equals prev_t f_type) then
-            (print_endline ("Warning: Id " ^ f.id ^
-                           " was already assigned type " ^ string_of_valid_type prev_t);
-            symbol_table_replace_id f.id (Function(f_type, p_type)) env)
-          else env)
-      with Failure(f) ->
-        env
+  let f_type = Function(f.ret_type, (List.map fst f.params)) in
+    try(
+      let prev_t = symbol_table_get_id f.id env in
+        if not (equals prev_t f_type) then
+          (print_endline ("Warning: Id " ^ f.id ^
+                         " was already assigned type " ^ string_of_valid_type prev_t);
+          check_func_helper f f_type env)
+        else env)
+    with Failure(fail) ->
+      check_func_helper f f_type env
 
 (* Checks program for semantic errors, returns env *)
 let check_program (p:program) =

@@ -2,6 +2,8 @@ double main(int a, b, bool q){
 yup = 10;
 i = true;
 
+ins = 8 + 1.0;
+
 hi = int[];
 yup + hi[1];
 

@@ -22,13 +22,13 @@ let rec symbol_table_get_id (id:string) env =
         else
           symbol_table_get_id id (table, ancestor_scope.(scope))
 
-let symbol_table_add_id (id:string) (t:valid_type) env =
+let symbol_table_add_id env (id:string) (t:valid_type) =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
       Hashtbl.add table table_key t;
       (table, scope)
 
-let symbol_table_replace_id (id:string) (t:valid_type) env =
+let symbol_table_replace_id env (id:string) (t:valid_type) =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
       Hashtbl.replace table table_key t;
