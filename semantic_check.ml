@@ -136,7 +136,7 @@ let rec check_stmt s_table (s:stmt) =
 
 (* Checks block for any semantic errors. Returns unit (not s_table to keep correct scoping) *)
 and check_block (b:block) s_table =
-  ignore (List.fold_left check_stmt s_table b.stmts)
+  ignore (List.fold_left check_stmt s_table b)
 
 (* Adds the function def with type to table, then checks block, returns s_table *)
 let check_func_helper (f:func_def) (f_type:valid_type) s_table =
