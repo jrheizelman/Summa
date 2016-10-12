@@ -129,11 +129,12 @@ and check_block (b:block) env =
   let (table, _) = env in
     List.fold_left check_stmt (table, b.block_num) b.stmts
 
-(* Adds the function def with type to table, then checks block *)
+(* Adds the function def with type to table, then checks block, returns env *)
 let check_func_helper (f:func_def) (f_type:valid_type) env =
   let env = symbol_table_add_id env f.id f_type in
     let add_params = (fun env (t, id) -> symbol_table_add_id env id t) in
-      List.fold_left add_params env f.params
+      let env = List.fold_left add_params env f.params in
+        check_block f.body_block env
 
 
 let check_func_def (f:func_def) env =
