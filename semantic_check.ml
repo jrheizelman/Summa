@@ -52,113 +52,113 @@ let check_unop (r:rval_t) (op:uop) =
     | _ -> unop_err t op
 
 (* Checks rval access for any errors, returns rval_t *)
-let rec check_rval (r:rval) s_table =
+let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
-      print_table s_table;
-      let(ce1, ce2) = (check_rval r1 s_table, check_rval r2 s_table) in
+      print_table env;
+      let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
         check_binop ce1 ce2 op
   | Un_op(op, r) ->
-      let cr = check_rval r s_table in
+      let cr = check_rval r env in
         check_unop cr op
   | Bool_lit(b) -> Bool_lit_t(b)
   | Int_lit(i) -> Int_lit_t(i)
   | Double_lit(d) -> Double_lit_t(d)
-  | Access_lval(l) -> Access_lval_t(check_lval l s_table, l)
+  | Access_lval(l) -> Access_lval_t(check_lval l env, l)
   | Noexpr -> Noexpr_t(Void)
   | Decl(t) -> Decl_t(t)
   | Increment(i, l) ->
-      let t = check_lval l s_table in
+      let t = check_lval l env in
       if equals t Int then Increment_t(i, l)
       else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))
 
 (* Checks lval access for any errors, returns validtype *)
-and check_lval (l:lval) s_table =
+and check_lval (l:lval) env =
   match l with
-    Id(id) -> symbol_table_get_id (id_of_lval l) s_table
+    Id(id) -> symbol_table_get_id (id_of_lval l) env
   | Access_arr(l, r) ->
-      if not (type_of_rval_t (check_rval r s_table) = Int) then
+      if not (type_of_rval_t (check_rval r env) = Int) then
         raise(Failure("Value inside array brackets must be integer."))
-      else let l_type = check_lval l s_table in
+      else let l_type = check_lval l env in
         match l_type with
           Array(t, d) -> if d == 1 then t else Array(t, d-1)
         | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))
 
-let get_reference_id (r:rval) s_table =
-  match (check_rval r s_table) with
+let get_reference_id (r:rval) env =
+  match (check_rval r env) with
     Access_lval_t(t, l) -> id_of_lval l
   | _ -> raise(Failure("get_reference_id call made on non-lval type."))
 
 (* Checks assignment, adds to table when new, checks type if existing. Returns s_table *)
-let check_assign (l:lval) (r:rval) s_table =
-  let new_t = type_of_rval_t (check_rval r s_table) in
+let check_assign (l:lval) (r:rval) env =
+  let new_t = type_of_rval_t (check_rval r env) in
     (match new_t with
-      Undef -> ignore (new_t = Ref_to_type(get_reference_id r s_table));
-    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r s_table)); | _ -> ();)
+      Undef -> ignore (new_t = Ref_to_type(get_reference_id r env));
+    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r env)); | _ -> ();)
     | _ -> (););
     try(
-      let prev_t = check_lval l s_table in
+      let prev_t = check_lval l env in
         if not (equals prev_t new_t) then
             (print_endline ("Warning: Id " ^ (id_of_lval l) ^
                            " was already assigned type " ^ string_of_valid_type prev_t);
-            symbol_table_replace_id s_table (id_of_lval l) new_t)
-        else s_table)
+            symbol_table_replace_id env (id_of_lval l) new_t)
+        else env)
     with Failure(f) -> (* id of lval is not present in the table *)
       match l with
-        Id(id) -> symbol_table_add_id s_table id (type_of_rval_t (check_rval r s_table))
+        Id(id) -> symbol_table_add_id env id (type_of_rval_t (check_rval r env))
       | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
 
-(* Checks statements for semantic errors, returns s_table *)
-let rec check_stmt s_table (s:stmt) =
+(* Checks statements for semantic errors, returns env *)
+let rec check_stmt env (s:stmt) =
   match s with
-    Assign(l, r) -> check_assign l r s_table
-  | Rval(r) -> ignore (check_rval r s_table); s_table
-  | Return(r) -> ignore (check_rval r s_table); s_table
+    Assign(l, r) -> check_assign l r env
+  | Rval(r) -> ignore (check_rval r env); env
+  | Return(r) -> ignore (check_rval r env); env
   | If(r, b1, b2) ->
-      let r_type = type_of_rval_t (check_rval r s_table) in
+      let r_type = type_of_rval_t (check_rval r env) in
         if equals r_type Bool then (
-          ignore (check_block b1 s_table); ignore (check_block b2 s_table); s_table)
+          ignore (check_block b1 env); ignore (check_block b2 env); env)
         else raise(Failure("Value inside if statement condition must be bool, received: " ^
                            string_of_valid_type r_type ^ "."))
   | While(r, b) ->
-      let r_type = type_of_rval_t (check_rval r s_table) in
+      let r_type = type_of_rval_t (check_rval r env) in
         if equals r_type Bool then (
-          ignore (check_block b s_table); s_table)
+          ignore (check_block b env); env)
         else raise(Failure("Value inside while statement condition must be bool, received: " ^
                            string_of_valid_type r_type ^ "."))
   | For(s1, r, s2, b) ->
-      let r_type = type_of_rval_t (check_rval r s_table) in
-        if equals r_type Bool then let s_table_for = check_stmt s_table s1 in
-          let s_table_for = check_stmt s_table_for s2 in
-            ignore (check_block b s_table_for); s_table
+      let r_type = type_of_rval_t (check_rval r env) in
+        if equals r_type Bool then let env_for = check_stmt env s1 in
+          let env_for = check_stmt env_for s2 in
+            ignore (check_block b env_for); env
         else raise(Failure("Value inside for statement condition must be bool, received: " ^
                            string_of_valid_type r_type ^ "."))
 
-(* Checks block for any semantic errors. Returns unit (not s_table to keep correct scoping) *)
-and check_block (b:block) s_table =
-  ignore (List.fold_left check_stmt s_table b)
+and check_block (b:block) env =
+  let (table, _) = env in
+    List.fold_left check_stmt (table, b.block_num) b.stmts
 
-(* Adds the function def with type to table, then checks block, returns s_table *)
-let check_func_helper (f:func_def) (f_type:valid_type) s_table =
-  let s_table = symbol_table_add_id s_table f.id f_type in
-    let add_params = (fun s_table (t, id) -> symbol_table_add_id s_table id t) in
-      let s_table = List.fold_left add_params s_table f.params in
-        check_block f.body_block s_table;
-        s_table
+(* Adds the function def with type to table, then checks block, returns env *)
+let check_func_helper (f:func_def) (f_type:valid_type) env =
+  let env = symbol_table_add_id env f.id f_type in
+    let add_params = (fun env (t, id) -> symbol_table_add_id env id t) in
+      let env = List.fold_left add_params env f.params in
+        check_block f.body_block env
 
-let check_func_def (f:func_def) s_table =
+
+let check_func_def (f:func_def) env =
   let f_type = Function(f.ret_type, (List.map fst f.params)) in
     try(
-      let prev_t = symbol_table_get_id f.id s_table in
+      let prev_t = symbol_table_get_id f.id env in
         if not (equals prev_t f_type) then
           (print_endline ("Warning: Id " ^ f.id ^
                          " was already assigned type " ^ string_of_valid_type prev_t);
-          ignore (symbol_table_replace_id s_table f.id f_type);
-          check_func_helper f f_type s_table)
-        else s_table)
+          ignore (symbol_table_replace_id env f.id f_type);
+          check_func_helper f f_type env)
+        else env)
     with Failure(fail) ->
-      check_func_helper f f_type s_table
+      check_func_helper f f_type env
 
-(* Checks program for semantic errors, returns s_table *)
+(* Checks program for semantic errors, returns env *)
 let check_program (p:program) =
-  check_func_def p (Hashtbl.create 1000)
+  check_func_def p ((Hashtbl.create 1000), 0)
