@@ -6,7 +6,7 @@ type increment = Incr_front | Incr_back | Decr_front | Decr_back
 type uop = Neg | Not | Increment of increment
 
 type valid_type = Int | Bool | Double | Array of valid_type * int | Void
-| Function of valid_type * valid_type list | Undef
+| Function of valid_type * valid_type list | Undef | Ref_to_type of string
 
 type lval =
   Id of string
@@ -44,6 +44,8 @@ type func_def = {
 }
 
 type program = func_def
+
+let array_type (vt, _) = vt
 
 let rec equals t1 t2 = match t1 with
   Int -> (match t2 with Int -> true | _ -> false)

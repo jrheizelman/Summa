@@ -84,20 +84,29 @@ and check_lval (l:lval) s_table =
           Array(t, d) -> if d == 1 then t else Array(t, d-1)
         | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))
 
+let get_reference_id (r:rval) s_table =
+  match (check_rval r s_table) with
+    Access_lval_t(t, l) -> id_of_lval l
+  | _ -> raise(Failure("get_reference_id call made on non-lval type."))
+
 (* Checks assignment, adds to table when new, checks type if existing. Returns s_table *)
 let check_assign (l:lval) (r:rval) s_table =
-  try(
-    let prev_t = check_lval l s_table in
-      let new_t = type_of_rval_t (check_rval r s_table) in
+  let new_t = type_of_rval_t (check_rval r s_table) in
+    (match new_t with
+      Undef -> ignore (new_t = Ref_to_type(get_reference_id r s_table));
+    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r s_table)); | _ -> ();)
+    | _ -> (););
+    try(
+      let prev_t = check_lval l s_table in
         if not (equals prev_t new_t) then
-          (print_endline ("Warning: Id " ^ (id_of_lval l) ^
-                         " was already assigned type " ^ string_of_valid_type prev_t);
-          symbol_table_replace_id s_table (id_of_lval l) new_t)
+            (print_endline ("Warning: Id " ^ (id_of_lval l) ^
+                           " was already assigned type " ^ string_of_valid_type prev_t);
+            symbol_table_replace_id s_table (id_of_lval l) new_t)
         else s_table)
-  with Failure(f) -> (* id of lval is not present in the table *)
-    match l with
-      Id(id) -> symbol_table_add_id s_table id (type_of_rval_t (check_rval r s_table))
-    | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
+    with Failure(f) -> (* id of lval is not present in the table *)
+      match l with
+        Id(id) -> symbol_table_add_id s_table id (type_of_rval_t (check_rval r s_table))
+      | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
 
 (* Checks statements for semantic errors, returns s_table *)
 let rec check_stmt s_table (s:stmt) =
