@@ -90,34 +90,34 @@ line_stmt:
 stmt:
   line_stmt SEMI { $1 }
 | IF LPAREN rval RPAREN block %prec NOELSE {
-    If($3, $5, []) }
+    If($3, $5, { block_num = scope.contents; stmts = [] }) }
 | IF LPAREN rval RPAREN stmt %prec NOELSE   {
-    If($3, [$5], []) }
+    If($3, { block_num = scope.contents; stmts = [$5] }, { block_num = scope.contents; stmts = [] }) }
 | IF LPAREN rval RPAREN block ELSE block  { If($3, $5, $7) }
 | IF LPAREN rval RPAREN stmt ELSE block   {
-    If($3, [$5], $7) }
+    If($3, { block_num = scope.contents; stmts = [$5] }, $7) }
 | IF LPAREN rval RPAREN block ELSE stmt   {
-    If($3, $5, [$7]) }
+    If($3, $5, { block_num = scope.contents; stmts = [$7] }) }
 | IF LPAREN rval RPAREN stmt ELSE stmt   {
-    If($3, [$5], [$7]) }
+    If($3, { block_num = scope.contents; stmts = [$5] }, { block_num = scope.contents; stmts = [$7] }) }
 | WHILE LPAREN opt_rval RPAREN block  {
     match $3 with
       Noexpr -> While(Bool_lit(true), $5)
     | _ -> While($3, $5) }
 | WHILE LPAREN opt_rval RPAREN stmt  {
     match $3 with
-      Noexpr -> While(Bool_lit(true), [$5])
-    | _ -> While($3, [$5]) }
+      Noexpr -> While(Bool_lit(true), { block_num = scope.contents; stmts = [$5] } )
+    | _ -> While($3, { block_num = scope.contents; stmts = [$5] } ) }
 | FOR LPAREN line_stmt SEMI rval SEMI line_stmt RPAREN block  { For($3, $5, $7, $9) }
 | FOR LPAREN line_stmt SEMI rval SEMI line_stmt RPAREN stmt  {
-    For($3, $5, $7, [$9]) }
+    For($3, $5, $7, { block_num = scope.contents; stmts = [$9] }) }
 
 stmt_list:
   /* nothing */   { [] }
 | stmt_list stmt { $2 :: $1 }
 
 block:
-  LBRACE stmt_list RBRACE   { List.rev $2 }
+  LBRACE stmt_list RBRACE   { { stmts = List.rev $2; block_num = inc_block_num() } }
 
 param:
   ID  { (Undef, $1) }

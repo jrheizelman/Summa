@@ -145,7 +145,6 @@ let check_func_helper (f:func_def) (f_type:valid_type) env =
       let env = List.fold_left add_params env f.params in
         check_block f.body_block env
 
-
 let check_func_def (f:func_def) env =
   let f_type = Function(f.ret_type, (List.map fst f.params)) in
     try(

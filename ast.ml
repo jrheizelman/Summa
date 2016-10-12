@@ -31,7 +31,10 @@ type stmt =
 | While of rval * block
 | For of stmt * rval * stmt * block
 
-and block = stmt list
+and block = {
+  stmts : stmt list;
+  block_num : int;
+}
 
 type func_def = {
   id : string;
@@ -63,7 +66,6 @@ let rec equals t1 t2 = match t1 with
           comp_lists p_list1 p_list2
     | _ -> false)
 | Undef -> (match t2 with Undef -> true | _ -> false)
-(* TODO: Fix equality for ref to type and the undefined from the id referenced *)
 | Ref_to_type(s1) -> (match t2 with Ref_to_type(s2) -> s1 = s2 | _ -> false)
 
 let rec id_of_lval = function
@@ -137,8 +139,9 @@ let rec string_of_stmt = function
 | For(s1, r, s2, b) -> "for (" ^ string_of_stmt s1 ^ "; " ^ string_of_rval r ^
                        "; " ^ string_of_stmt s2 ^ ")" ^ string_of_block b
 
-and string_of_block (b:block) = "block : {\n" ^
-    String.concat "" (List.map string_of_stmt b) ^ "}\n"
+and string_of_block (b:block) = "block " ^ string_of_int b.block_num ^ ": {\n" ^
+    String.concat "" (List.map string_of_stmt b.stmts) ^
+    "}\n"
 
 let string_of_func_def (f:func_def) = "func_def " ^ f.id ^ ", type: " ^
   string_of_valid_type f.ret_type ^ " (" ^
