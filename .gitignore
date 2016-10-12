@@ -1,0 +1,9 @@
+*.o
+summa
+*.DS_Store
+*.cmi
+*.cmo
+parser.ml
+scanner.ml
+*.mli
+test_all.log
