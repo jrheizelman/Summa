@@ -2,32 +2,50 @@ open Ast
 open Sast
 open Symbol_table
 
+let convert_rval_t_type (r:rval_t) (t:valid_type) env = match r with
+  Access_lval_t(_, l) -> (Access_lval_t(t, l), symbol_table_replace_id env (id_of_lval l) t)
+| _ -> raise(Failure("No lval to convert in table"))
+
+let link_rval_t (r1:rval_t) (r2:rval_t) env = match r1 with
+  Access_lval_t(_, l1) -> (match r2 with
+    Access_lval_t(_, l2) ->
+      let (r1, env) = convert_rval_t_type r1 (Ref_to_type((id_of_lval l2), snd env)) env in
+        let (r2, env) = convert_rval_t_type r2 (Ref_to_type((id_of_lval l1), snd env)) env in
+          (r1, r2, env)
+  | _ -> raise(Failure("No lval to convert in table")))
+| _ -> raise(Failure("No lval to convert in table"))
+
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
-    raise(Failure("Operator " ^ (string_of_bop op) ^
-      " not compatible with expressions of type " ^
-      string_of_valid_type t1 ^ " and  " ^
-      string_of_valid_type t2 ^ "."))
+  raise(Failure("Operator " ^ (string_of_bop op) ^
+    " not compatible with expressions of type " ^
+    string_of_valid_type t1 ^ " and  " ^
+    string_of_valid_type t2 ^ "."))
 
-(* Check binary operation *)
-let check_binop (r1:rval_t) (r2:rval_t) (op:bop) =
+(* Check binary operation, returns (Bin_op_t, env) *)
+let check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
   let (t1, t2) = (type_of_rval_t r1, type_of_rval_t r2) in
     (* Both are ints *)
-    match (t1, t2) with (Int, Int) ->
-      (match op with
-        (Add | Sub | Mult | Div | Mod) -> Bin_op_t(Int, r1, op, r2)
-        | (Equal | Neq | Less | Leq | Greater | Geq) -> Bin_op_t(Bool, r1, op, r2)
+    match (t1, t2) with
+      (Int, Int) ->
+        (match op with
+          (Add | Sub | Mult | Div | Mod) -> (Bin_op_t(Int, r1, op, r2), env)
+        | (Equal | Neq | Less | Leq | Greater | Geq) -> (Bin_op_t(Bool, r1, op, r2), env)
         | _ -> binop_err t1 t2 op)
-    (* Both are bools *)
     | (Bool, Bool) ->
-      (match op with (And | Or | Equal | Neq) ->
-        Bin_op_t(Bool, r1, op, r2)
+        (match op with (And | Or | Equal | Neq) ->
+          (Bin_op_t(Bool, r1, op, r2), env)
         | _ -> binop_err t1 t2 op)
     | (Double, Double) ->
-      (match op with
-        (Add | Sub | Mult | Div | Mod) -> Bin_op_t(Double, r1, op, r2)
-        | (Equal | Neq | Less | Leq | Greater | Geq) -> Bin_op_t(Bool, r1, op, r2)
+        (match op with
+          (Add | Sub | Mult | Div | Mod) -> (Bin_op_t(Double, r1, op, r2), env)
+        | (Equal | Neq | Less | Leq | Greater | Geq) -> (Bin_op_t(Bool, r1, op, r2), env)
         | _ -> binop_err t1 t2 op)
+    | (Undef, Undef) ->
+        (match op with
+          (And | Or) -> let (r1, env) = convert_rval_t_type r1 Bool env in
+            let (r2, env) = convert_rval_t_type r1 Bool env in (Bin_op_t(Bool, r1, op, r2), env)
+        | _ -> let (r1, r2, env) = link_rval_t r1 r2 env in (Bin_op_t(Undef, r1, op, r2), env))
     | _ -> binop_err t1 t2 op
 
 let unop_err (t:valid_type) (op:uop) =
@@ -35,7 +53,7 @@ let unop_err (t:valid_type) (op:uop) =
     " not compatible with expression of type " ^
     (string_of_valid_type t) ^ "."))
 
-(* Checks unary operation for proper types *)
+(* Checks unary operation for proper types, returns (Un_op_t, env) *)
 let check_unop (r:rval_t) (op:uop) =
   let t = type_of_rval_t r in
     match t with
@@ -51,7 +69,7 @@ let check_unop (r:rval_t) (op:uop) =
           | _ -> unop_err t op)
     | _ -> unop_err t op
 
-(* Checks rval access for any errors, returns rval_t *)
+(* Checks rval access for any errors, returns (rval_t, env) *)
 let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
@@ -86,22 +104,21 @@ and check_lval (l:lval) env =
 
 let get_reference_id (r:rval) env =
   match (check_rval r env) with
-    Access_lval_t(t, l) -> id_of_lval l
+    Access_lval_t(t, l) -> (id_of_lval l)
   | _ -> raise(Failure("get_reference_id call made on non-lval type."))
 
 (* Checks assignment, adds to table when new, checks type if existing. Returns s_table *)
 let check_assign (l:lval) (r:rval) env =
   let new_t = type_of_rval_t (check_rval r env) in
     (match new_t with
-      Undef -> ignore (new_t = Ref_to_type(get_reference_id r env));
-    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r env)); | _ -> ();)
+      Undef -> ignore (new_t = Ref_to_type(get_reference_id r env, snd env));
+    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r env, snd env)); | _ -> ();)
     | _ -> (););
     try(
       let prev_t = check_lval l env in
         if not (equals prev_t new_t) then
-            (print_endline ("Warning: Id " ^ (id_of_lval l) ^
-                           " was already assigned type " ^ string_of_valid_type prev_t);
-            symbol_table_replace_id env (id_of_lval l) new_t)
+          (* Add new entry at lower scope with new type *)
+          symbol_table_add_id env (id_of_lval l) new_t
         else env)
     with Failure(f) -> (* id of lval is not present in the table *)
       match l with
