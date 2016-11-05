@@ -8,7 +8,7 @@ type unop = Neg | Not | Increment of increment
 type monotype = Int | Bool | Double | Char | String | Void
 
 (* TODO add user-groups i.e. interfaces with condition_list and supergroup *)
-type grouping = Num | None
+type grouping = Num
 
 type polytype =
   Reference of string
@@ -97,7 +97,6 @@ let string_of_monotype (m:monotype) = match m with
 
 let string_of_grouping (g:grouping) = match g with
   Num -> "num"
-| None -> "none"
 
 (* TODO write a print function for valid_type to bool function list *)
 let rec string_of_polytype (p:polytype) = match p with

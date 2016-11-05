@@ -70,8 +70,8 @@ opt_rval:
 valid_type:
   INT   { Mono(Int, [Num]) }
 | DOUBLE  { Mono(Double, [Num]) }
-| BOOL  { Mono(Bool, [None]) }
-| VOID { Mono(Void, [None]) }
+| BOOL  { Mono(Bool, []) }
+| VOID { Mono(Void, []) }
 
 lval:
   ID  { Id($1) }
