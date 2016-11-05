@@ -12,8 +12,6 @@ rule token = parse
 | ')' { RPAREN }
 | '{' { LBRACE }
 | '}' { RBRACE }
-| '[' { LBRACK }
-| ']' { RBRACK }
 | "++" { PLUSPLUS }
 | "--" { MINUSMINUS }
 | '+' { PLUS }
