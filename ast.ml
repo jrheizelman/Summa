@@ -8,7 +8,7 @@ type unop = Neg | Not | Increment of increment
 type monotype = Int | Bool | Double | Char | String | Void
 
 (* TODO add user-groups i.e. interfaces with condition_list and supergroup *)
-type grouping = Num
+type grouping = Num | CharString
 
 type polytype =
   Reference of string

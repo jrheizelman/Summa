@@ -12,7 +12,7 @@ let inc_block_num
 %token LPAREN RPAREN LBRACE RBRACE
 %token WHILE IF ELSE RETURN NOELSE FOR DEF
 %token PLUS TIMES MINUS DIVIDE MOD PLUSPLUS MINUSMINUS
-%token BOOL INT DOUBLE VOID
+%token BOOL INT DOUBLE VOID STRING CHAR
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
 %token SEMI ASSIGN EOF COMMA
 %token <int> INTLIT
@@ -72,6 +72,8 @@ valid_type:
 | DOUBLE  { Mono(Double, [Num]) }
 | BOOL  { Mono(Bool, []) }
 | VOID { Mono(Void, []) }
+| STRING { Mono(String, [CharString]) }
+| CHAR { Mono(Char, [CharString]) }
 
 lval:
   ID  { Id($1) }
