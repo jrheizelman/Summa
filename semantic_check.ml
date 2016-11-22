@@ -2,6 +2,27 @@ open Ast
 open Sast
 open Symbol_table
 
+let rec mono_is_poly mono gl poly env = match poly with
+  Reference(s) -> let (_, vt) = symbol_table_get_id s env in (match vt with
+    Mono(m, _) -> if mono == m then (true, env) else (false, env)
+  | Poly(p2) -> mono_is_poly mono gl p2 env)
+| Conditioned(c_list) -> (match c_list with
+    hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
+      else (true, env) (* (mono_is_poly mono gl Poly(Conditioned(tl)) env) *)
+  | [] -> (true, env))
+| Function(pt_list, rt) -> (false, env) (* a function object can never = mono *)
+| Grouping(g) -> (match gl with
+    hd :: tl -> if g == hd then (true, env) else mono_is_poly mono tl poly env
+  | [] -> (false, env))
+
+let write_rval_t vt rval env = match rval with
+  Increment_t(i, l) -> (rval, env)
+| Access_lval_t(_, l) -> (rval, env)
+| Un_op_t(_, unop, inner_rval) -> (rval, env)
+| Bin_op_t(_, r1, op, r2) -> (rval, env)
+| _ -> raise(Failure(string_of_valid_type (type_of_rval_t rval) ^
+    " cannot be overwritten."))
+
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
   raise(Failure("Operator " ^ (string_of_bop op) ^
@@ -10,10 +31,10 @@ let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
     string_of_valid_type t2 ^ "."))
 
 (* Check binary operation, returns env on success *)
-let check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
+let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
   let (t1, t2) = (type_of_rval_t r1, type_of_rval_t r2) in
     match t1 with
-      Mono(m1, gl2) -> (match t2 with
+      Mono(m1, gl1) -> (match t2 with
         (* Both r1 and r2 are monotypes *)
         Mono(m2, gl2) -> (match op with
           (Equal | Neq | Leq | Geq | Greater | Less | Add) ->
@@ -28,9 +49,12 @@ let check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
             | _ -> binop_err t1 t2 op)
         | _ -> binop_err t1 t2 op)
         (* r1 is a monotype, r2 is polytype *)
-      | Poly(p2) -> env
-
-      )
+      | Poly(p2) -> (
+          let (check, env) = mono_is_poly m1 gl1 p2 env in
+            if check then
+              let (r2, env) = write_rval_t t1 r2 env in check_binop r1 r2 op env
+            else binop_err t1 t2 op
+        ))
     | Poly(p1) -> env
 
 let unop_err (t:valid_type) (op:unop) =
@@ -45,7 +69,6 @@ let check_unop (r:rval_t) (op:unop) env = env
 let rec check_rval (r:rval) env =
   match r with
     Bin_op(r1, op, r2) ->
-      print_table env;
       let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
         check_binop ce1 ce2 op
   | Un_op(op, r) ->

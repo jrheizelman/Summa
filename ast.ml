@@ -32,7 +32,6 @@ and rval =
 | Un_op of unop * rval
 | Access_lval of lval
 | Noexpr
-(* | Decl of valid_type *)
 | Increment of increment * lval
 
 type stmt =

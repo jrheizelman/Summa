@@ -1,7 +1,7 @@
 open Ast
 open Sast
 
-(* Handles hash table of symbols. Env is type ((string, valid_type) Hashtable, int) *)
+(* Handles hash table of symbols, type ((string, valid_type) Hashtable, int) *)
 
 let print_table env =
   print_endline "Printing table.";

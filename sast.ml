@@ -8,7 +8,6 @@ type rval_t =
 | Un_op_t of valid_type * unop * rval_t
 | Access_lval_t of valid_type * lval
 | Noexpr_t of valid_type
-| Decl_t of valid_type
 | Increment_t of increment * lval
 
 let type_of_rval_t = function
@@ -19,5 +18,4 @@ let type_of_rval_t = function
 | Un_op_t(t, _, _) -> t
 | Access_lval_t(t, _) -> t
 | Noexpr_t(t) -> t
-| Decl_t(t) -> t
 | Increment_t(_, _) -> Mono(Int, [Num])
