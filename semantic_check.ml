@@ -8,7 +8,7 @@ let rec mono_is_poly mono gl poly env = match poly with
   | Poly(p2) -> mono_is_poly mono gl p2 env)
 | Conditioned(c_list) -> (match c_list with
     hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
-      else (true, env) (* (mono_is_poly mono gl Poly(Conditioned(tl)) env) *)
+      else (mono_is_poly mono gl (Conditioned(tl)) env)
   | [] -> (true, env))
 | Function(pt_list, rt) -> (false, env) (* a function object can never = mono *)
 | Grouping(g) -> (match gl with
