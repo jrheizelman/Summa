@@ -2,19 +2,6 @@ open Ast
 open Sast
 open Symbol_table
 
-let convert_rval_t_type (r:rval_t) (t:valid_type) env = match r with
-  Access_lval_t(_, l) -> (Access_lval_t(t, l), symbol_table_replace_id env (id_of_lval l) t)
-| _ -> raise(Failure("No lval to convert in table"))
-
-let link_rval_t (r1:rval_t) (r2:rval_t) env = match r1 with
-  Access_lval_t(_, l1) -> (match r2 with
-    Access_lval_t(_, l2) ->
-      let (r1, env) = convert_rval_t_type r1 (Ref_to_type((id_of_lval l2), snd env)) env in
-        let (r2, env) = convert_rval_t_type r2 (Ref_to_type((id_of_lval l1), snd env)) env in
-          (r1, r2, env)
-  | _ -> raise(Failure("No lval to convert in table")))
-| _ -> raise(Failure("No lval to convert in table"))
-
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
   raise(Failure("Operator " ^ (string_of_bop op) ^
@@ -22,22 +9,29 @@ let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
     string_of_valid_type t1 ^ " and  " ^
     string_of_valid_type t2 ^ "."))
 
-(* Check binary operation *)
+(* Check binary operation, returns env on success *)
 let check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
   let (t1, t2) = (type_of_rval_t r1, type_of_rval_t r2) in
     match t1 with
       Mono(m1, gl2) -> (match t2 with
+        (* Both r1 and r2 are monotypes *)
         Mono(m2, gl2) -> (match op with
           (Equal | Neq | Leq | Geq | Greater | Less | Add) ->
             (match (m1,m2) with
               ((String, String) | (Int, Int) | (Double, Double) | (Char, Char))
                 -> env
+            | (Bool, Bool) -> if op == Equal then env else binop_err t1 t2 op
             | _ -> binop_err t1 t2 op)
-        | (Sub | Mult | Div | Mod)
-        )
-      | Poly(p2) -> ()
+        | (Sub | Mult | Div | Mod) ->
+            (match (m1, m2) with
+              ((Int, Int) | (Double, Double)) -> env
+            | _ -> binop_err t1 t2 op)
+        | _ -> binop_err t1 t2 op)
+        (* r1 is a monotype, r2 is polytype *)
+      | Poly(p2) -> env
+
       )
-    | Poly(p1) -> ()
+    | Poly(p1) -> env
 
 let unop_err (t:valid_type) (op:unop) =
   raise(Failure("Operator " ^ (string_of_unop op) ^
@@ -45,20 +39,7 @@ let unop_err (t:valid_type) (op:unop) =
     (string_of_valid_type t) ^ "."))
 
 (* Checks unary operation for proper types *)
-let check_unop (r:rval_t) (op:unop) =
-  let t = type_of_rval_t r in
-    match t with
-    (* Expression is an int *)
-       Int ->
-        (match op with
-          Neg -> Un_op_t(Int, op, r)
-        | _ -> unop_err t op)
-    (* Expression is a bool *)
-    | Bool ->
-      (match op with
-          Not -> Un_op_t(Bool, op, r)
-          | _ -> unop_err t op)
-    | _ -> unop_err t op
+let check_unop (r:rval_t) (op:unop) env = env
 
 (* Checks rval access for any errors, returns (rval_t, env) *)
 let rec check_rval (r:rval) env =
