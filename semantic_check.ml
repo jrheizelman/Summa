@@ -22,39 +22,30 @@ let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
     string_of_valid_type t1 ^ " and  " ^
     string_of_valid_type t2 ^ "."))
 
-(* Check binary operation, returns (Bin_op_t, env) *)
+(* Check binary operation *)
 let check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
   let (t1, t2) = (type_of_rval_t r1, type_of_rval_t r2) in
-    (* Both are ints *)
-    match (t1, t2) with
-      (Int, Int) ->
-        (match op with
-          (Add | Sub | Mult | Div | Mod) -> (Bin_op_t(Int, r1, op, r2), env)
-        | (Equal | Neq | Less | Leq | Greater | Geq) -> (Bin_op_t(Bool, r1, op, r2), env)
-        | _ -> binop_err t1 t2 op)
-    | (Bool, Bool) ->
-        (match op with (And | Or | Equal | Neq) ->
-          (Bin_op_t(Bool, r1, op, r2), env)
-        | _ -> binop_err t1 t2 op)
-    | (Double, Double) ->
-        (match op with
-          (Add | Sub | Mult | Div | Mod) -> (Bin_op_t(Double, r1, op, r2), env)
-        | (Equal | Neq | Less | Leq | Greater | Geq) -> (Bin_op_t(Bool, r1, op, r2), env)
-        | _ -> binop_err t1 t2 op)
-    | (Undef, Undef) ->
-        (match op with
-          (And | Or) -> let (r1, env) = convert_rval_t_type r1 Bool env in
-            let (r2, env) = convert_rval_t_type r1 Bool env in (Bin_op_t(Bool, r1, op, r2), env)
-        | _ -> let (r1, r2, env) = link_rval_t r1 r2 env in (Bin_op_t(Undef, r1, op, r2), env))
-    | _ -> binop_err t1 t2 op
+    match t1 with
+      Mono(m1, gl2) -> (match t2 with
+        Mono(m2, gl2) -> (match op with
+          (Equal | Neq | Leq | Geq | Greater | Less | Add) ->
+            (match (m1,m2) with
+              ((String, String) | (Int, Int) | (Double, Double) | (Char, Char))
+                -> env
+            | _ -> binop_err t1 t2 op)
+        | (Sub | Mult | Div | Mod)
+        )
+      | Poly(p2) -> ()
+      )
+    | Poly(p1) -> ()
 
-let unop_err (t:valid_type) (op:uop) =
+let unop_err (t:valid_type) (op:unop) =
   raise(Failure("Operator " ^ (string_of_unop op) ^
     " not compatible with expression of type " ^
     (string_of_valid_type t) ^ "."))
 
-(* Checks unary operation for proper types, returns (Un_op_t, env) *)
-let check_unop (r:rval_t) (op:uop) =
+(* Checks unary operation for proper types *)
+let check_unop (r:rval_t) (op:unop) =
   let t = type_of_rval_t r in
     match t with
     (* Expression is an int *)
@@ -83,9 +74,8 @@ let rec check_rval (r:rval) env =
   | Int_lit(i) -> Int_lit_t(i)
   | Double_lit(d) -> Double_lit_t(d)
   | Access_lval(l) -> Access_lval_t(check_lval l env, l)
-  | Noexpr -> Noexpr_t(Void)
-  | Decl(t) -> Decl_t(t)
-  | Increment(i, l) ->
+  | Noexpr -> Noexpr_t(Void
+you)  | Increment(i, l) ->
       let t = check_lval l env in
       if equals t Int then Increment_t(i, l)
       else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))

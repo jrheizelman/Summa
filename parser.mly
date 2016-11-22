@@ -9,10 +9,10 @@ let inc_block_num
 
 %}
 
-%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
+%token LPAREN RPAREN LBRACE RBRACE
 %token WHILE IF ELSE RETURN NOELSE FOR DEF
 %token PLUS TIMES MINUS DIVIDE MOD PLUSPLUS MINUSMINUS
-%token BOOL INT DOUBLE VOID
+%token BOOL INT DOUBLE VOID STRING CHAR
 %token AND OR NOT EQ NEQ LEQ GEQ LTHAN GTHAN
 %token SEMI ASSIGN EOF COMMA
 %token <int> INTLIT
@@ -58,7 +58,6 @@ rval:
 | rval AND rval   { Bin_op($1, And, $3) }
 | LPAREN rval RPAREN  { $2 }
 | lval  { Access_lval($1) }
-| valid_type { Decl($1) }
 | PLUSPLUS lval  { Increment(Incr_front, $2) }
 | lval PLUSPLUS  { Increment(Incr_back, $1) }
 | MINUSMINUS lval  { Increment(Decr_front, $2) }
@@ -69,18 +68,15 @@ opt_rval:
 | rval  { $1 }
 
 valid_type:
-  INT   { Int }
-| DOUBLE  { Double }
-| BOOL  { Bool }
-| VOID { Void }
-| valid_type LBRACK opt_rval RBRACK   {
-    match $1 with
-      Array(t, d) -> Array(t, d+1)
-    | _ ->  Array($1, 1) }
+  INT   { Mono(Int, [Num]) }
+| DOUBLE  { Mono(Double, [Num]) }
+| BOOL  { Mono(Bool, []) }
+| VOID { Mono(Void, []) }
+| STRING { Mono(String, [CharString]) }
+| CHAR { Mono(Char, [CharString]) }
 
 lval:
   ID  { Id($1) }
-| lval LBRACK rval RBRACK   { Access_arr($1, $3) }
 
 line_stmt:
   lval ASSIGN rval   { Assign($1, $3) }
@@ -120,7 +116,7 @@ block:
   LBRACE stmt_list RBRACE   { { stmts = List.rev $2; block_num = inc_block_num() } }
 
 param:
-  ID  { (Undef, $1) }
+  ID  { (Poly(Conditioned([])), $1) }
 | valid_type ID { ($1, $2) }
 
 params_opt:
@@ -130,7 +126,7 @@ params_opt:
 
 func_def:
   DEF ID LPAREN params_opt RPAREN block   {
-    { id = $2; ret_type = Undef; params = List.rev $4; body_block = $6 } }
+    { id = $2; ret_type = Poly(Conditioned([])); params = List.rev $4; body_block = $6 } }
 | valid_type ID LPAREN params_opt RPAREN block   {
     { id = $2; ret_type = $1; params = List.rev $4; body_block = $6 } }
 
