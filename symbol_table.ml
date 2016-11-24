@@ -10,7 +10,7 @@ let print_table env =
 (* each index in the array refers to a block and holds within it the scope of the parent block *)
 let ancestor_scope = Array.make 1000 0
 
-let rec symbol_table_get_id (id:string) env =
+let rec symbol_table_get_id (env:(string, Ast.valid_type) Hashtbl.t * int) (id:string) =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
       if Hashtbl.mem table table_key
@@ -20,7 +20,7 @@ let rec symbol_table_get_id (id:string) env =
                                       " not declared in current scope! (Scope: " ^
                                       string_of_int scope ^ ")"))
         else
-          symbol_table_get_id id (table, ancestor_scope.(scope))
+          symbol_table_get_id (table, ancestor_scope.(scope)) id
 
 let symbol_table_add_id env (id:string) (t:valid_type) =
   let (table, scope) = env in

@@ -3,7 +3,7 @@ open Sast
 open Symbol_table
 
 let rec mono_is_poly mono gl poly env = match poly with
-  Reference(s) -> let (_, vt) = symbol_table_get_id s env in (match vt with
+  Reference(s) -> let vt = symbol_table_get_id env s in (match vt with
     Mono(m, _) -> if mono == m then (true, env) else (false, env)
   | Poly(p2) -> mono_is_poly mono gl p2 env)
 | Conditioned(c_list) -> (match c_list with
@@ -16,7 +16,8 @@ let rec mono_is_poly mono gl poly env = match poly with
   | [] -> (false, env))
 
 let write_rval_t vt rval env = match rval with
-  Increment_t(i, l) -> (rval, env)
+  Increment_t(i, l) -> let s = id_of_lval l in
+    (rval, symbol_table_replace_id env s vt)
 | Access_lval_t(_, l) -> (rval, env)
 | Un_op_t(_, unop, inner_rval) -> (rval, env)
 | Bin_op_t(_, r1, op, r2) -> (rval, env)
@@ -30,7 +31,7 @@ let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
     string_of_valid_type t1 ^ " and  " ^
     string_of_valid_type t2 ^ "."))
 
-(* Check binary operation, returns env on success *)
+(* Check binary operation, returns rval_t * env on success *)
 let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
   let (t1, t2) = (type_of_rval_t r1, type_of_rval_t r2) in
     match t1 with
@@ -40,12 +41,14 @@ let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
           (Equal | Neq | Leq | Geq | Greater | Less | Add) ->
             (match (m1,m2) with
               ((String, String) | (Int, Int) | (Double, Double) | (Char, Char))
-                -> env
-            | (Bool, Bool) -> if op == Equal then env else binop_err t1 t2 op
+                -> (Bin_op_t(t1, r1, op, r2), env)
+            | (Bool, Bool) -> if op == Equal then
+                (Bin_op_t(t1, r1, op, r2), env)
+              else binop_err t1 t2 op
             | _ -> binop_err t1 t2 op)
         | (Sub | Mult | Div | Mod) ->
             (match (m1, m2) with
-              ((Int, Int) | (Double, Double)) -> env
+              ((Int, Int) | (Double, Double)) -> (Bin_op_t(t1, r1, op, r2), env)
             | _ -> binop_err t1 t2 op)
         | _ -> binop_err t1 t2 op)
         (* r1 is a monotype, r2 is polytype *)

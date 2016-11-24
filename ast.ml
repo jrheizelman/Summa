@@ -61,12 +61,10 @@ type program = func_def
 | Bool -> (match t2 with Bool -> true | _ -> false)
 | Double -> (match t2 with Double -> true | _ -> false)
 | Char -> (match t2 with Char -> true | _ -> false)
-| String -> (match t2 with String -> true | _ -> false)
->>>>>>> 6e6673ef4059d5df640fb65eb5ccd8c164d2f17c
+| String -> (match t2 with String -> true | _ -> false) *)
 
 let rec id_of_lval = function
   Id(id) -> id
-| Access_arr(l, _) -> id_of_lval l *)
 
 (*************************
 **** PRINT AST **********
