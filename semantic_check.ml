@@ -2,9 +2,13 @@ open Ast
 open Sast
 open Symbol_table
 
+(* Checks compatibility between monotype and polytype, returns bool * env *)
 let rec mono_is_poly mono gl poly env = match poly with
   Reference(s) -> let vt = symbol_table_get_id env s in (match vt with
-    Mono(m, _) -> if mono == m then (true, env) else (false, env)
+    Mono(m, _) ->
+      if mono == m then let env = symbol_table_replace_id env s vt in
+        (true, env)
+      else (false, env)
   | Poly(p2) -> mono_is_poly mono gl p2 env)
 | Conditioned(c_list) -> (match c_list with
     hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
@@ -14,6 +18,17 @@ let rec mono_is_poly mono gl poly env = match poly with
 | Grouping(g) -> (match gl with
     hd :: tl -> if g == hd then (true, env) else mono_is_poly mono tl poly env
   | [] -> (false, env))
+
+(* Checks compatibility from p1 to p2. On success:
+  - Returns most restrictive valid_type * env
+  - Overwrites p1, p2, any referenced types with most restrictive type *)
+let poly_is_poly p1 p2 env = match p1 with
+  Reference(s1) -> let vt1 = symbol_table_get_id env s1 in (match vt1 with
+    Mono(m1, gl1) -> mono_is_poly m1 gl1 p2 env
+  | Poly(p1) -> poly_match_poly p1 p2 env
+| Condiitoned(c_list1) ->
+| Function(pt_list1, rt1) ->
+| Grouping(g) ->
 
 let write_rval_t vt rval env = match rval with
   Increment_t(i, l) -> let s = id_of_lval l in
@@ -56,9 +71,13 @@ let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
           let (check, env) = mono_is_poly m1 gl1 p2 env in
             if check then
               let (r2, env) = write_rval_t t1 r2 env in check_binop r1 r2 op env
-            else binop_err t1 t2 op
-        ))
-    | Poly(p1) -> env
+            else binop_err t1 t2 op))
+    | Poly(p1) -> (match t2 with
+        Mono(m2, gl2) -> let (check, env) = mono_is_poly m2 gl2 p1 env in
+          if check then
+            let (r1, env) = write_rval_t t2 r1 env in check_binop r1 r2 op env
+      | Poly(p2) ->
+    )
 
 let unop_err (t:valid_type) (op:unop) =
   raise(Failure("Operator " ^ (string_of_unop op) ^
