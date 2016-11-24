@@ -2,22 +2,24 @@ open Ast
 open Sast
 open Symbol_table
 
-(* Checks compatibility between monotype and polytype, returns bool * env *)
-let rec mono_is_poly mono gl poly env = match poly with
-  Reference(s) -> let vt = symbol_table_get_id env s in (match vt with
-    Mono(m, _) ->
-      if mono == m then let env = symbol_table_replace_id env s vt in
-        (true, env)
-      else (false, env)
-  | Poly(p2) -> mono_is_poly mono gl p2 env)
-| Conditioned(c_list) -> (match c_list with
-    hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
-      else (mono_is_poly mono gl (Conditioned(tl)) env)
-  | [] -> (true, env))
-| Function(pt_list, rt) -> (false, env) (* a function object can never = mono *)
-| Grouping(g) -> (match gl with
-    hd :: tl -> if g == hd then (true, env) else mono_is_poly mono tl poly env
-  | [] -> (false, env))
+(* Checks compatibility between monotype and polytype, returns bool * env
+  If the polytype is a reference resolved to monotype, will overwrite poly *)
+let rec mono_is_poly mono gl rval env = match type_of_rval_t rval with
+  Poly(poly) -> (match poly with
+    Reference(s) -> let vt = symbol_table_get_id env s in match vt with
+      Mono(m, _) ->
+        if mono == m then (write_rval_t Mono(m, gl) rval env; (true, env))
+        else (false, env)
+    | Poly(p2) -> mono_is_poly mono gl p2 env)
+  | Conditioned(c_list) -> (match c_list with
+      hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
+        else (mono_is_poly mono gl (Conditioned(tl)) env)
+    | [] -> (true, env))
+  | Function(pt_list, rt) -> (false, env) (* a function object never = mono *)
+  | Grouping(g) -> (match gl with
+      hd :: tl -> if g == hd then (true, env) else mono_is_poly mono tl poly env
+    | [] -> (false, env))
+| Mono(_, _) -> raise(Failure("Rval in mono_is_poly must be polytype"))
 
 (* Checks compatibility from p1 to p2. On success:
   - Returns most restrictive valid_type * env
