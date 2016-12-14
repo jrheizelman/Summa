@@ -29,8 +29,15 @@ let symbol_table_add_id env (id:string) (t:valid_type) =
       (table, scope)
 
 (* Replaces value for id in env with t, returns env *)
-let symbol_table_replace_id env (id:string) (t:valid_type) =
+let rec symbol_table_replace_id env (id:string) (t:valid_type) =
   let (table, scope) = env in
     let table_key = id ^ "_" ^ string_of_int scope in
-      Hashtbl.replace table table_key t;
-      (table, scope)
+      if Hashtbl.mem table table_key
+        then (Hashtbl.replace table table_key t;
+        (table, scope))
+      else
+        if scope = 0 then raise (Failure("Replace id - Symbol " ^ id ^
+                                      " not declared in current scope! (Scope: " ^
+                                      string_of_int scope ^ ")"))
+        else
+          symbol_table_replace_id (table, ancestor_scope.(scope)) id t

@@ -2,44 +2,44 @@ open Ast
 open Sast
 open Symbol_table
 
-(* Checks compatibility between monotype and polytype, returns bool * env
+let match_err (v1:valid_type) (v2:valid_type) =
+  raise(Failure("Types " ^ string_of_valid_type v1 ^ " and " ^
+    string_of_valid_type v2 ^ " are not compatible."))
+
+(* Checks compatibility between monotype and polytype, returns env
   If the polytype is a reference resolved to monotype, will overwrite poly *)
-let rec mono_is_poly mono gl rval env = match type_of_rval_t rval with
-  Poly(poly) -> (match poly with
-    Reference(s) -> let vt = symbol_table_get_id env s in match vt with
-      Mono(m, _) ->
-        if mono == m then (write_rval_t Mono(m, gl) rval env; (true, env))
-        else (false, env)
-    | Poly(p2) -> mono_is_poly mono gl p2 env)
-  | Conditioned(c_list) -> (match c_list with
-      hd :: tl -> if not (hd (Mono(mono, gl))) then (false, env)
-        else (mono_is_poly mono gl (Conditioned(tl)) env)
-    | [] -> (true, env))
-  | Function(pt_list, rt) -> (false, env) (* a function object never = mono *)
-  | Grouping(g) -> (match gl with
-      hd :: tl -> if g == hd then (true, env) else mono_is_poly mono tl poly env
-    | [] -> (false, env))
-| Mono(_, _) -> raise(Failure("Rval in mono_is_poly must be polytype"))
+let rec mono_is_poly mono gl poly id env = match poly with
+  Reference(s) -> let vt = symbol_table_get_id env s in (match vt with
+    Mono(m, _) ->
+      if mono == m then symbol_table_replace_id env id (Mono(mono, gl))
+      else match_err (Mono(m, gl)) (Poly(poly))
+  | Poly(p2) -> mono_is_poly mono gl p2 s env)
+| Conditioned(c_list) -> (match c_list with
+    hd :: tl ->
+      if not (hd (Mono(mono, gl))) then
+        match_err (Mono(mono, gl)) (Poly(poly))
+      else (mono_is_poly mono gl (Conditioned(tl)) id env)
+  | [] -> symbol_table_replace_id env id (Mono(mono, gl)))
+| Function(_, _) -> match_err (Mono(mono, gl)) (Poly(poly))
+| Grouping(g) -> (match gl with
+    hd :: tl -> if g == hd then env else mono_is_poly mono tl poly id env
+  | [] -> match_err (Mono(mono, gl)) (Poly(poly)))
 
-(* Checks compatibility from p1 to p2. On success:
-  - Returns most restrictive valid_type * env
-  - Overwrites p1, p2, any referenced types with most restrictive type *)
-let poly_is_poly p1 p2 env = match p1 with
-  Reference(s1) -> let vt1 = symbol_table_get_id env s1 in (match vt1 with
-    Mono(m1, gl1) -> mono_is_poly m1 gl1 p2 env
-  | Poly(p1) -> poly_match_poly p1 p2 env
-| Condiitoned(c_list1) ->
-| Function(pt_list1, rt1) ->
-| Grouping(g) ->
-
-let write_rval_t vt rval env = match rval with
-  Increment_t(i, l) -> let s = id_of_lval l in
-    (rval, symbol_table_replace_id env s vt)
-| Access_lval_t(_, l) -> (rval, env)
-| Un_op_t(_, unop, inner_rval) -> (rval, env)
-| Bin_op_t(_, r1, op, r2) -> (rval, env)
-| _ -> raise(Failure(string_of_valid_type (type_of_rval_t rval) ^
-    " cannot be overwritten."))
+(* Checks compatibility from polytypes r1 to r2, on success:
+  - Returns match with most restrictive valid_type * env
+  - Overwrites r1, r2, and any referenced types in env *)
+let poly_is_poly r1 r2 env = match type_of_rval_t r1 with
+  Poly(p1) -> (match p1 with
+    Reference(s1) -> (let vt1 = symbol_table_get_id env s1 in match vt1 with
+      Mono(m1, gl1) -> let (ok, env) = mono_is_poly m1 gl1 r2 env in
+        if ok then let env = write_rval_t vt1 r1 env in
+          (vt1, env)
+        else ()
+    | Poly(p1) -> poly_match_poly p1 r2 env)
+  | Conditioned(c_list1) -> ()
+  | Function(pt_list1, rt1) -> ()
+  | Grouping(g) -> ())
+| _ -> raise(Failure("poly_is_poly must be called on two polytypes"))
 
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
@@ -78,7 +78,7 @@ let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
         Mono(m2, gl2) -> let (check, env) = mono_is_poly m2 gl2 p1 env in
           if check then
             let (r1, env) = write_rval_t t2 r1 env in check_binop r1 r2 op env
-      | Poly(p2) ->
+      | Poly(p2) -> ()
     )
 
 let unop_err (t:valid_type) (op:unop) =
