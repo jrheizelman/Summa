@@ -28,18 +28,19 @@ let rec mono_is_poly mono gl poly id env = match poly with
 (* Checks compatibility from polytypes r1 to r2, on success:
   - Returns match with most restrictive valid_type * env
   - Overwrites r1, r2, and any referenced types in env *)
-let poly_is_poly r1 r2 env = match type_of_rval_t r1 with
-  Poly(p1) -> (match p1 with
-    Reference(s1) -> (let vt1 = symbol_table_get_id env s1 in match vt1 with
-      Mono(m1, gl1) -> let (ok, env) = mono_is_poly m1 gl1 r2 env in
-        if ok then let env = write_rval_t vt1 r1 env in
-          (vt1, env)
-        else ()
-    | Poly(p1) -> poly_match_poly p1 r2 env)
-  | Conditioned(c_list1) -> ()
-  | Function(pt_list1, rt1) -> ()
-  | Grouping(g) -> ())
-| _ -> raise(Failure("poly_is_poly must be called on two polytypes"))
+let rec poly_is_poly poly1 id1 poly2 id2 env = match poly1 with
+  Reference(ref_id) ->
+    (let ref_vt = symbol_table_get_id env ref_id in match ref_vt with
+      Mono(ref_m, ref_g) -> let env = mono_is_poly ref_m ref_g poly2 id2 env in
+        symbol_table_replace_id env id1 (Mono(ref_m, ref_g))
+    | Poly(ref_p) -> let env = poly_is_poly ref_p ref_id poly2 id2 env in
+        let ret_vt = symbol_table_get_id env ref_id in
+          symbol_table_replace_id env id1 ret_vt)
+| Conditioned(c_list1) -> (match poly2 with
+    Conditioned(c_list2) -> ()
+  | _ -> poly_is_poly poly2 id2 poly1 id1 env)
+| Function(pt_list1, rt1) -> ()
+| Grouping(g) -> ()
 
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
