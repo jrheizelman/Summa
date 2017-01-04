@@ -138,26 +138,22 @@ let rec check_rval (r:rval) env =
   | Access_lval(l) -> (Access_lval_t(check_lval l env, l), env)
   | Noexpr -> (Noexpr_t, env)
   | Increment(i, l) ->
-      let t = check_lval l env in
-        if equals t Int then (Increment_t(i, l), env)
-        else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))
+      let vt = check_lval l env in
+        let id = id_of_lval l in
+          let env = vt_is_vt (Poly(Grouping(Num))) id vt id env in
+            (Increment_t(i, l), env)
 
 (* Checks lval access for any errors, returns validtype *)
 and check_lval (l:lval) env =
   match l with
-    Id(id) -> symbol_table_get_id (id_of_lval l) env
-  | Access_arr(l, r) ->
+    Id(id) -> symbol_table_get_id env (id_of_lval l)
+  (*| Access_arr(l, r) ->
       if not (type_of_rval_t (check_rval r env) = Int) then
         raise(Failure("Value inside array brackets must be integer."))
       else let l_type = check_lval l env in
         match l_type with
           Array(t, d) -> if d == 1 then t else Array(t, d-1)
-        | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))
-
-let get_reference_id (r:rval) env =
-  match (check_rval r env) with
-    Access_lval_t(t, l) -> (id_of_lval l)
-  | _ -> raise(Failure("get_reference_id call made on non-lval type."))
+        | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))*)
 
 (* Checks assignment, adds to table when new, checks type if existing. Returns s_table *)
 let check_assign (l:lval) (r:rval) env =
