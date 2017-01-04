@@ -84,27 +84,26 @@ let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
           (Equal | Neq | Leq | Geq | Greater | Less | Add) ->
             (match (m1,m2) with
               ((String, String) | (Int, Int) | (Double, Double) | (Char, Char))
-                -> (Bin_op_t(t1, r1, op, r2), env)
+                -> (Binop_t(t1, r1, op, r2), env)
             | (Bool, Bool) -> if op == Equal then
-                (Bin_op_t(t1, r1, op, r2), env)
+                (Binop_t(t1, r1, op, r2), env)
               else binop_err t1 t2 op
             | _ -> binop_err t1 t2 op)
         | (Sub | Mult | Div | Mod) ->
             (match (m1, m2) with
-              ((Int, Int) | (Double, Double)) -> (Bin_op_t(t1, r1, op, r2), env)
+              ((Int, Int) | (Double, Double)) -> (Binop_t(t1, r1, op, r2), env)
             | _ -> binop_err t1 t2 op)
         | _ -> binop_err t1 t2 op)
         (* r1 is a monotype, r2 is polytype *)
       | Poly(p2) -> let env = mono_is_poly m1 gl1 p2 (id_of_rval_t r2) env in
-          (Bin_op_t(t1, r1, op, r2), env)
+          (Binop_t(t1, r1, op, r2), env))
     | Poly(p1) -> (match t2 with
         Mono(m2, gl2) ->
           let env = mono_is_poly m2 gl2 p1 (id_of_rval_t r1) env in
-            (Bin_op_t(t1, r1, op, r2), env)
+            (Binop_t(t1, r1, op, r2), env)
       | Poly(p2) -> let env =
           poly_is_poly p1 (id_of_rval_t r1) p2 (id_of_rval_t r2) env in
-            (Bin_op_t(t1, r1, op, r2), env))
-    )
+            (Binop_t(t1, r1, op, r2), env))
 
 let unop_err (t:valid_type) (op:unop) =
   raise(Failure("Operator " ^ (string_of_unop op) ^
@@ -112,26 +111,36 @@ let unop_err (t:valid_type) (op:unop) =
     (string_of_valid_type t) ^ "."))
 
 (* Checks unary operation for proper types *)
-let check_unop (r:rval_t) (op:unop) env = env
+let check_unop (r:rval_t) (op:unop) env =
+  let vt = type_of_rval_t r in
+    let id = id_of_rval_t r in
+      match op with
+        Neg -> let env = vt_is_vt (Poly(Grouping(Num))) id vt id env in
+          (Unop_t(vt, op, r), env)
+      | Not -> let env = vt_is_vt (Mono(Bool, [])) id vt id env in
+          (Unop_t(vt, op, r), env)
+      | Increment(_) -> let env = vt_is_vt (Poly(Grouping(Num))) id vt id env in
+          (Unop_t(vt, op, r), env)
 
 (* Checks rval access for any errors, returns (rval_t, env) *)
 let rec check_rval (r:rval) env =
   match r with
-    Bin_op(r1, op, r2) ->
-      let(ce1, ce2) = (check_rval r1 env, check_rval r2 env) in
-        check_binop ce1 ce2 op
-  | Un_op(op, r) ->
-      let cr = check_rval r env in
-        check_unop cr op
-  | Bool_lit(b) -> Bool_lit_t(b)
-  | Int_lit(i) -> Int_lit_t(i)
-  | Double_lit(d) -> Double_lit_t(d)
-  | Access_lval(l) -> Access_lval_t(check_lval l env, l)
-  | Noexpr -> Noexpr_t(Void
-you)  | Increment(i, l) ->
+    Binop(r1, op, r2) ->
+      let(ce1, env) = check_rval r1 env in
+        let (ce2, env) = check_rval r2 env in
+          check_binop ce1 ce2 op env
+  | Unop(op, r) ->
+      let (cr, env) = check_rval r env in
+        check_unop cr op env
+  | Bool_lit(b) -> (Bool_lit_t(b), env)
+  | Int_lit(i) -> (Int_lit_t(i), env)
+  | Double_lit(d) -> (Double_lit_t(d), env)
+  | Access_lval(l) -> (Access_lval_t(check_lval l env, l), env)
+  | Noexpr -> (Noexpr_t, env)
+  | Increment(i, l) ->
       let t = check_lval l env in
-      if equals t Int then Increment_t(i, l)
-      else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))
+        if equals t Int then (Increment_t(i, l), env)
+        else raise(Failure("Increment only valid on type int, " ^ string_of_valid_type t ^ " received."))
 
 (* Checks lval access for any errors, returns validtype *)
 and check_lval (l:lval) env =

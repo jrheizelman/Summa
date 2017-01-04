@@ -40,22 +40,22 @@ rval:
 | BOOLLIT   { Bool_lit($1) }
 | DOUBLELIT   { Double_lit($1) }
 /* Unary operations */
-| MINUS rval %prec NEG    { Un_op(Neg, $2) }
-| NOT rval %prec NEG    { Un_op(Not, $2) }
+| MINUS rval %prec NEG    { Unop(Neg, $2) }
+| NOT rval %prec NEG    { Unop(Not, $2) }
 /* Binary operations */
-| rval PLUS rval    { Bin_op($1, Add, $3) }
-| rval MINUS rval    { Bin_op($1, Sub, $3) }
-| rval TIMES rval    { Bin_op($1, Mult, $3) }
-| rval DIVIDE rval    { Bin_op($1, Div, $3) }
-| rval MOD rval    { Bin_op($1, Mod, $3) }
-| rval EQ rval   { Bin_op($1, Equal, $3) }
-| rval NEQ rval   { Bin_op($1, Neq, $3) }
-| rval LEQ rval   { Bin_op($1, Leq, $3) }
-| rval GEQ rval   { Bin_op($1, Geq, $3) }
-| rval LTHAN rval   { Bin_op($1, Less, $3) }
-| rval GTHAN rval   { Bin_op($1, Greater, $3) }
-| rval OR rval   { Bin_op($1, Or, $3) }
-| rval AND rval   { Bin_op($1, And, $3) }
+| rval PLUS rval    { Binop($1, Add, $3) }
+| rval MINUS rval    { Binop($1, Sub, $3) }
+| rval TIMES rval    { Binop($1, Mult, $3) }
+| rval DIVIDE rval    { Binop($1, Div, $3) }
+| rval MOD rval    { Binop($1, Mod, $3) }
+| rval EQ rval   { Binop($1, Equal, $3) }
+| rval NEQ rval   { Binop($1, Neq, $3) }
+| rval LEQ rval   { Binop($1, Leq, $3) }
+| rval GEQ rval   { Binop($1, Geq, $3) }
+| rval LTHAN rval   { Binop($1, Less, $3) }
+| rval GTHAN rval   { Binop($1, Greater, $3) }
+| rval OR rval   { Binop($1, Or, $3) }
+| rval AND rval   { Binop($1, And, $3) }
 | LPAREN rval RPAREN  { $2 }
 | lval  { Access_lval($1) }
 | PLUSPLUS lval  { Increment(Incr_front, $2) }

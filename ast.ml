@@ -28,8 +28,8 @@ and rval =
   Int_lit of int
 | Bool_lit of bool
 | Double_lit of float
-| Bin_op of rval * bop * rval
-| Un_op of unop * rval
+| Binop of rval * bop * rval
+| Unop of unop * rval
 | Access_lval of lval
 | Noexpr
 | Increment of increment * lval
@@ -95,6 +95,7 @@ let string_of_monotype (m:monotype) = match m with
 
 let string_of_grouping (g:grouping) = match g with
   Num -> "num"
+| CharString -> "char-string"
 
 (* TODO write a print function for valid_type to bool function list *)
 let rec string_of_polytype (p:polytype) = match p with
@@ -131,9 +132,9 @@ and string_of_rval (r:rval) = match r with
   Int_lit(i) -> "int_lit " ^ string_of_int i
 | Bool_lit(b) -> "bool_lit " ^ string_of_bool b
 | Double_lit(d) -> "double_lit " ^ string_of_float d
-| Bin_op(r1, b, r2) -> "bin_op { " ^ string_of_rval r1 ^ " " ^ string_of_bop b ^
+| Binop(r1, b, r2) -> "Binop { " ^ string_of_rval r1 ^ " " ^ string_of_bop b ^
     " " ^ string_of_rval r2 ^ " }"
-| Un_op(u, r) -> "un_op { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"
+| Unop(u, r) -> "Unop { " ^ string_of_unop u ^ " " ^ string_of_rval r ^ " }"
 | Access_lval(l) -> "access " ^ string_of_lval l
 | Noexpr -> "noexpr"
 | Increment(i, l) -> string_of_increment i ^ " " ^ string_of_lval l
