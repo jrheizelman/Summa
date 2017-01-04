@@ -6,9 +6,17 @@ let match_err (v1:valid_type) (v2:valid_type) =
   raise(Failure("Types " ^ string_of_valid_type v1 ^ " and " ^
     string_of_valid_type v2 ^ " are not compatible."))
 
+let rec vt_is_vt vt1 id1 vt2 id2 env = match vt1 with
+  Mono(m1, gl1) -> (match vt2 with
+    Mono(m2, _) -> if m1 == m2 then env else match_err vt1 vt2
+  | Poly(poly2) -> mono_is_poly m1 gl1 poly2 id2 env)
+| Poly(poly1) -> (match vt2 with
+    Mono(m2, gl2) -> mono_is_poly m2 gl2 poly1 id1 env
+  | Poly(poly2) -> poly_is_poly poly1 id1 poly2 id2 env)
+
 (* Checks compatibility between monotype and polytype, returns env
   If the polytype is a reference resolved to monotype, will overwrite poly *)
-let rec mono_is_poly mono gl poly id env = match poly with
+and mono_is_poly mono gl poly id env = match poly with
   Reference(s) -> let vt = symbol_table_get_id env s in (match vt with
     Mono(m, _) ->
       if mono == m then symbol_table_replace_id env id (Mono(mono, gl))
@@ -25,10 +33,9 @@ let rec mono_is_poly mono gl poly id env = match poly with
     hd :: tl -> if g == hd then env else mono_is_poly mono tl poly id env
   | [] -> match_err (Mono(mono, gl)) (Poly(poly)))
 
-(* Checks compatibility from polytypes r1 to r2, on success:
-  - Returns match with most restrictive valid_type * env
-  - Overwrites r1, r2, and any referenced types in env *)
-let rec poly_is_poly poly1 id1 poly2 id2 env = match poly1 with
+(* Checks compatibility from polytypes r1 to r2
+  - Overwrites r1, r2, and any referenced types in env, then returns env *)
+and poly_is_poly poly1 id1 poly2 id2 env = match poly1 with
   Reference(ref_id) ->
     (let ref_vt = symbol_table_get_id env ref_id in match ref_vt with
       Mono(ref_m, ref_g) -> let env = mono_is_poly ref_m ref_g poly2 id2 env in
@@ -37,9 +44,18 @@ let rec poly_is_poly poly1 id1 poly2 id2 env = match poly1 with
         let ret_vt = symbol_table_get_id env ref_id in
           symbol_table_replace_id env id1 ret_vt)
 | Conditioned(c_list1) -> (match poly2 with
-    Conditioned(c_list2) -> ()
+    Conditioned(c_list2) -> env (* TODO: compatibility of two condition lists *)
   | _ -> poly_is_poly poly2 id2 poly1 id1 env)
-| Function(pt_list1, rt1) -> ()
+| Function(pt_list1, rt1) -> (match poly2 with
+    Function(pt_list2, rt2) -> (match pt_list1 with
+      (vt1, s1) :: tl1 -> (match pt_list2 with
+        (vt2, s2) :: tl2 -> let env = vt_is_vt vt1 s1 vt2 s2 env in
+          poly_is_poly (Function(tl1, rt1)) id1 (Function(tl2, rt2)) id2 env
+        | [] -> match_err (Poly(poly1)) (Poly(poly2)))
+    | [] -> (match pt_list2 with
+      [] -> vt_is_vt rt1 "" rt2 "" env
+      | _ -> match_err (Poly(poly1)) (Poly(poly2))))
+  | _ -> match_err (Poly(poly1)) (Poly(poly2)))
 | Grouping(g) -> ()
 
 (* Error raised for improper binary operation *)

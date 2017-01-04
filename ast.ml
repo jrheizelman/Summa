@@ -13,7 +13,7 @@ type grouping = Num | CharString
 type polytype =
   Reference of string
 | Conditioned of (valid_type -> bool) list
-| Function of valid_type list * valid_type
+| Function of (valid_type * string) list * valid_type
 | Grouping of grouping
 
 and valid_type =
@@ -101,9 +101,12 @@ let rec string_of_polytype (p:polytype) = match p with
   Reference(s) -> "ref_to_type: " ^ s
 | Conditioned(check_list) -> "conditioned_type"
 | Function(t_list, t) -> "fun(" ^
-    String.concat ", " (List.map string_of_valid_type t_list) ^ ") -> " ^
-    string_of_valid_type t
-| Grouping(g) -> "group"
+    String.concat ", "
+      (List.map
+        (fun entry -> string_of_valid_type (fst entry) ^ " " ^ snd entry)
+        t_list)
+    ^ ") -> " ^ string_of_valid_type t
+| Grouping(g) -> "group" ^ string_of_grouping g
 
 and string_of_valid_type (t:valid_type) = match t with
   Mono(m, g) -> string_of_monotype m ^ ", g:" ^
