@@ -95,16 +95,15 @@ let rec check_binop (r1:rval_t) (r2:rval_t) (op:bop) env =
             | _ -> binop_err t1 t2 op)
         | _ -> binop_err t1 t2 op)
         (* r1 is a monotype, r2 is polytype *)
-      | Poly(p2) -> (
-          let (check, env) = mono_is_poly m1 gl1 p2 env in
-            if check then
-              let (r2, env) = write_rval_t t1 r2 env in check_binop r1 r2 op env
-            else binop_err t1 t2 op))
+      | Poly(p2) -> let env = mono_is_poly m1 gl1 p2 (id_of_rval_t r2) env in
+          (Bin_op_t(t1, r1, op, r2), env)
     | Poly(p1) -> (match t2 with
-        Mono(m2, gl2) -> let (check, env) = mono_is_poly m2 gl2 p1 env in
-          if check then
-            let (r1, env) = write_rval_t t2 r1 env in check_binop r1 r2 op env
-      | Poly(p2) -> ()
+        Mono(m2, gl2) ->
+          let env = mono_is_poly m2 gl2 p1 (id_of_rval_t r1) env in
+            (Bin_op_t(t1, r1, op, r2), env)
+      | Poly(p2) -> let env =
+          poly_is_poly p1 (id_of_rval_t r1) p2 (id_of_rval_t r2) env in
+            (Bin_op_t(t1, r1, op, r2), env))
     )
 
 let unop_err (t:valid_type) (op:unop) =

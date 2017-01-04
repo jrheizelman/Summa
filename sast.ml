@@ -10,6 +10,12 @@ type rval_t =
 | Noexpr_t of valid_type
 | Increment_t of increment * lval
 
+let rec id_of_rval_t = function
+	Un_op_t(_, _, r) -> id_of_rval_t r
+| Access_lval_t(_, l) -> id_of_lval l
+| Increment_t(_, l) -> id_of_lval l
+| _ -> ""
+
 let type_of_rval_t = function
   Int_lit_t(_) -> Mono(Int, [Num])
 | Bool_lit_t(_) -> Mono(Bool, [])
