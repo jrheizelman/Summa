@@ -55,8 +55,17 @@ and poly_is_poly poly1 id1 poly2 id2 env = match poly1 with
     | [] -> (match pt_list2 with
       [] -> vt_is_vt rt1 "" rt2 "" env
       | _ -> match_err (Poly(poly1)) (Poly(poly2))))
+  | Reference(r2) -> poly_is_poly poly2 id2 poly1 id1 env
   | _ -> match_err (Poly(poly1)) (Poly(poly2)))
-| Grouping(g) -> ()
+| Grouping(g1) -> (match poly2 with
+    Grouping(g2) ->
+      if g1 == g2 then
+        env
+      else
+        match_err (Poly(poly1)) (Poly(poly2))
+  | Reference(r2) -> poly_is_poly poly2 id2 poly1 id1 env
+  | Conditioned(c_list2) -> env
+  | Function(_, _) -> match_err (Poly(poly1)) (Poly(poly2)))
 
 (* Error raised for improper binary operation *)
 let binop_err (t1:valid_type) (t2:valid_type) (op:bop) =
