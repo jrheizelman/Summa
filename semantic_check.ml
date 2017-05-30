@@ -155,42 +155,30 @@ and check_lval (l:lval) env =
           Array(t, d) -> if d == 1 then t else Array(t, d-1)
         | _ -> raise(Failure("Trying to access non-array " ^ (id_of_lval l) ^ " as array."))*)
 
-(* Checks assignment, adds to table when new, checks type if existing. Returns s_table *)
+(* Checks assignment, adds to table when new, checks type if existing. Returns env *)
 let check_assign (l:lval) (r:rval) env =
-  let new_t = type_of_rval_t (check_rval r env) in
-    (match new_t with
-      Undef -> ignore (new_t = Ref_to_type(get_reference_id r env, snd env));
-    | Array(vt, d) -> (match vt with Undef -> ignore (new_t = Ref_to_type(get_reference_id r env, snd env)); | _ -> ();)
-    | _ -> (););
-    try(
-      let prev_t = check_lval l env in
-        if not (equals prev_t new_t) then
-          (* Add new entry at lower scope with new type *)
-          symbol_table_add_id env (id_of_lval l) new_t
-        else env)
-    with Failure(f) -> (* id of lval is not present in the table *)
-      match l with
-        Id(id) -> symbol_table_add_id env id (type_of_rval_t (check_rval r env))
-      | Access_arr(l, _) -> raise(Failure("Array " ^ (id_of_lval l) ^ " not found."))
+  let (r_t, env) = check_rval r env in
+    symbol_table_add_id env (id_of_lval l) (type_of_rval_t r_t)
 
 (* Checks statements for semantic errors, returns env *)
 let rec check_stmt env (s:stmt) =
   match s with
     Assign(l, r) -> check_assign l r env
-  | Rval(r) -> ignore (check_rval r env); env
-  | Return(r) -> ignore (check_rval r env); env
+  | Rval(r) -> snd (check_rval r env)
+  | Return(r) -> snd (check_rval r env)
   | If(r, b1, b2) ->
-      let r_type = type_of_rval_t (check_rval r env) in
-        if equals r_type Bool then (
-          ignore (check_block b1 env); ignore (check_block b2 env); env)
+      let (r_t, env) = (check_rval r env) in
+        if type_of_rval_t r_t == Mono(Bool,[]) then
+          let env = check_block b1 env in
+            check_block b2 env
         else raise(Failure("Value inside if statement condition must be bool, received: " ^
-                           string_of_valid_type r_type ^ "."))
+                           string_of_valid_type (type_of_rval_t r_t) ^ "."))
   | While(r, b) ->
-      let r_type = type_of_rval_t (check_rval r env) in
-        if equals r_type Bool then (
-          ignore (check_block b env); env)
-        else raise(Failure("Value inside while statement condition must be bool, received: " ^
-                           string_of_valid_type r_type ^ "."))
+      let (r_t, env) = (check_rval r env) in
+        if type_of_rval_t r_t == Mono(Bool,[]) then
+          check_block b env
+        else raise(Failure("Value inside if statement condition must be bool, received: " ^
+                           string_of_valid_type (type_of_rval_t r_t) ^ "."))
   | For(s1, r, s2, b) ->
       let r_type = type_of_rval_t (check_rval r env) in
         if equals r_type Bool then let env_for = check_stmt env s1 in

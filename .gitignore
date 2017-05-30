@@ -7,3 +7,6 @@ parser.ml
 scanner.ml
 *.mli
 test_all.log
+*parser.cpp
+*parser.hpp
+*tokens.cpp
